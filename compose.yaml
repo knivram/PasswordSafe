@@ -1,0 +1,15 @@
+services:
+  db:
+    container_name: passwordsafe_db
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: passwordsafe
+      POSTGRES_PASSWORD: passwordsafe
+      POSTGRES_DB: passwordsafe
+    ports:
+      - "5432:5432"
+    volumes:
+      - passwordsafe_pgdata:/var/lib/postgresql/data
+
+volumes:
+  passwordsafe_pgdata:
