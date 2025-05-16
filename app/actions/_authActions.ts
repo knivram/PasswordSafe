@@ -11,6 +11,7 @@ export async function finishOnboarding(data: {
   publicKey: string;
   wrappedPrivateKey: string;
 }) {
+  const client = await clerkClient();
   const user = await currentUser();
 
   if (!user) {
@@ -29,7 +30,12 @@ export async function finishOnboarding(data: {
     });
 
     if (existingUser) {
-      throw new AuthError("Your account is allready onboarded.");
+      await client.users.updateUser(user.id, {
+        publicMetadata: {
+          onboardingComplete: true,
+        },
+      });
+      return;
     }
 
     // Persist the new user
@@ -43,7 +49,6 @@ export async function finishOnboarding(data: {
       },
     });
 
-    const client = await clerkClient();
     await client.users.updateUser(user.id, {
       publicMetadata: {
         onboardingComplete: true,

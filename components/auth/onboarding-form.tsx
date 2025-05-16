@@ -20,9 +20,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { AuthError } from "@/lib/errors";
 import { useUser } from "@clerk/nextjs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export function SignUpForm({
   className,
@@ -81,9 +82,24 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Finish onboarding</CardTitle>
-          <CardDescription>
-            Set your master password to finish your onboarding
+          <CardTitle className="text-2xl">
+            Welcome, {user?.firstName || "there"}!
+          </CardTitle>
+          <CardDescription className="space-y-4">
+            <p>
+              Set your <strong>master password</strong>{" "}
+              to finish your onboarding.
+            </p>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <p>
+                  This password{" "}
+                  <strong>cannot be reset</strong>. If forgotten, you will lose
+                  access to your encrypted data permanently.
+                </p>
+              </AlertDescription>
+            </Alert>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -96,7 +112,12 @@ export function SignUpForm({
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Master Password</Label>
+                  <Label htmlFor="password">
+                    Master Password{" "}
+                    <span className="text-xs text-muted-foreground">
+                      (encryption key)
+                    </span>
+                  </Label>
                 </div>
                 <Input
                   id="password"
@@ -125,12 +146,6 @@ export function SignUpForm({
                   ? "Setting master password..."
                   : "Set master password"}
               </Button>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="underline underline-offset-4">
-                Login
-              </Link>
             </div>
           </form>
         </CardContent>
