@@ -8,7 +8,7 @@ import {
   generateKeyPair,
   wrapPrivateKey,
 } from "@/lib/crypto";
-import { registerUser } from "@/app/actions/authActions";
+import { finishOnboarding } from "@/app/actions/_authActions";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -22,17 +22,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { AuthError } from "@/lib/errors";
+import { useUser } from "@clerk/nextjs";
 
 export function SignUpForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const router = useRouter();
+  const { user } = useUser();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,20 +56,20 @@ export function SignUpForm({
       const pubBuf = await crypto.subtle.exportKey("spki", publicKey);
       const publicKeyB64 = ab2b64(pubBuf);
 
-      await registerUser({
-        email,
-        password,
+      await finishOnboarding({
         salt,
         publicKey: publicKeyB64,
         wrappedPrivateKey: wrappedPrivateKeyB64,
       });
+
+      await user?.reload();
 
       router.push("/");
     } catch (error) {
       if (error instanceof AuthError) {
         setError(error.message);
       } else {
-        console.error("Registration error:", error);
+        console.error("Finish onboarding error:", error);
         setError("An unexpected error occurred. Please try again.");
       }
     } finally {
@@ -80,8 +81,10 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardTitle className="text-2xl">Finish onboarding</CardTitle>
+          <CardDescription>
+            Set your master password to finish your onboarding
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp} className="space-y-4">
@@ -92,19 +95,8 @@ export function SignUpForm({
             )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Master Password</Label>
                 </div>
                 <Input
                   id="password"
@@ -116,7 +108,9 @@ export function SignUpForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
+                  <Label htmlFor="repeat-password">
+                    Repeat Master Password
+                  </Label>
                 </div>
                 <Input
                   id="repeat-password"
@@ -127,7 +121,9 @@ export function SignUpForm({
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating an account..." : "Sign up"}
+                {isLoading
+                  ? "Setting master password..."
+                  : "Set master password"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
