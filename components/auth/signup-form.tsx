@@ -1,0 +1,144 @@
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ab2b64,
+  deriveKek,
+  generateKeyPair,
+  wrapPrivateKey,
+} from "@/lib/crypto";
+import { registerUser } from "@/app/actions/authActions";
+import { cn } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { AuthError } from "@/lib/errors";
+
+export function SignUpForm({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+  const router = useRouter();
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+    if (password !== repeatPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const saltArr = crypto.getRandomValues(new Uint8Array(16));
+      const salt = ab2b64(saltArr.buffer);
+      const { publicKey, privateKey } = await generateKeyPair();
+
+      const kek = await deriveKek(password, saltArr);
+      const wrappedPrivBuf = await wrapPrivateKey(privateKey, kek);
+      const wrappedPrivateKeyB64 = ab2b64(wrappedPrivBuf);
+
+      const pubBuf = await crypto.subtle.exportKey("spki", publicKey);
+      const publicKeyB64 = ab2b64(pubBuf);
+
+      await registerUser({
+        email,
+        password,
+        salt,
+        publicKey: publicKeyB64,
+        wrappedPrivateKey: wrappedPrivateKeyB64,
+      });
+
+      router.push("/");
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setError(error.message);
+      } else {
+        console.error("Registration error:", error);
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Sign up</CardTitle>
+          <CardDescription>Create a new account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSignUp} className="space-y-4">
+            {error && (
+              <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+                {error}
+              </div>
+            )}
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="repeat-password">Repeat Password</Label>
+                </div>
+                <Input
+                  id="repeat-password"
+                  type="password"
+                  required
+                  value={repeatPassword}
+                  onChange={(e) => setRepeatPassword(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating an account..." : "Sign up"}
+              </Button>
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Already have an account?{" "}
+              <Link href="/auth/login" className="underline underline-offset-4">
+                Login
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
