@@ -87,16 +87,15 @@ export function SignUpForm({
           </CardTitle>
           <CardDescription className="space-y-4">
             <p>
-              Set your <strong>master password</strong>{" "}
-              to finish your onboarding.
+              Set your <strong>master password</strong> to finish your
+              onboarding.
             </p>
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <p>
-                  This password{" "}
-                  <strong>cannot be reset</strong>. If forgotten, you will lose
-                  access to your encrypted data permanently.
+                  This password <strong>cannot be reset</strong>. If forgotten,
+                  you will lose access to your encrypted data permanently.
                 </p>
               </AlertDescription>
             </Alert>

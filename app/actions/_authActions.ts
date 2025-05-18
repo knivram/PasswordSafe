@@ -60,8 +60,6 @@ export async function finishOnboarding(data: {
       throw error;
     }
     console.error("Finish onboarding error:", error);
-    throw new AuthError(
-      "Failed to finish onboarding. Please try again later.",
-    );
+    throw new AuthError("Failed to finish onboarding. Please try again later.");
   }
 }
