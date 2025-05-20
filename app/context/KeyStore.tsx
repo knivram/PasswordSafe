@@ -8,7 +8,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { getUserData } from "../actions/getUserData";
+import { getUserData } from "../actions/_userActions";
 import { CryptoService } from "@/lib/crypto";
 
 const cryptoService = new CryptoService();

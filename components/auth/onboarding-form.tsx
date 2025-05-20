@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { finishOnboarding } from "@/app/actions/_authActions";
+import { finishOnboarding } from "@/app/actions/_userActions";
 import { cn } from "@/lib/utils";
 import {
   Card,
