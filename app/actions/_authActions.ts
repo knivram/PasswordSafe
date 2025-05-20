@@ -1,10 +1,8 @@
 "use server";
 
-import { PrismaClient } from "@/generated/prisma";
 import { AuthError } from "@/lib/errors";
 import { clerkClient, currentUser } from "@clerk/nextjs/server";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function finishOnboarding(data: {
   salt: string;
