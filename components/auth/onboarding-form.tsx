@@ -3,7 +3,6 @@
 import { useUser } from "@clerk/nextjs";
 import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
 import { finishOnboarding } from "@/app/actions/_authActions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,12 @@ import {
   wrapPrivateKey,
 } from "@/lib/crypto";
 import { AuthError } from "@/lib/errors";
-import { cn } from "@/lib/utils";
+import { useUser } from "@clerk/nextjs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { CryptoService } from "@/lib/crypto";
+
+const cryptoService = new CryptoService();
 
 export function SignUpForm({
   className,
@@ -46,21 +50,13 @@ export function SignUpForm({
     }
 
     try {
-      const saltArr = crypto.getRandomValues(new Uint8Array(16));
-      const salt = ab2b64(saltArr.buffer);
-      const { publicKey, privateKey } = await generateKeyPair();
-
-      const kek = await deriveKek(password, saltArr);
-      const wrappedPrivBuf = await wrapPrivateKey(privateKey, kek);
-      const wrappedPrivateKeyB64 = ab2b64(wrappedPrivBuf);
-
-      const pubBuf = await crypto.subtle.exportKey("spki", publicKey);
-      const publicKeyB64 = ab2b64(pubBuf);
+      const { publicKey, wrappedPrivateKey, salt } =
+        await cryptoService.onboarding(password);
 
       await finishOnboarding({
         salt,
-        publicKey: publicKeyB64,
-        wrappedPrivateKey: wrappedPrivateKeyB64,
+        publicKey,
+        wrappedPrivateKey,
       });
 
       await user?.reload();
