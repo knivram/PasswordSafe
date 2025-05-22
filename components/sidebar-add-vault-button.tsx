@@ -19,16 +19,36 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "./ui/sidebar";
+import { CryptoService } from "@/lib/crypto";
+import { useKeyStore } from "@/app/context/KeyStore";
+import { createVault } from "@/app/actions/_vaultActions";
+
+const CREATE_VAULT_FORM_ID = "create-vault-form";
 
 export function SidebarAddVaultButton() {
+  const cryptoService = new CryptoService();
+  const { isInitialized, publicKey } = useKeyStore();
   const [isOpen, setIsOpen] = useState(false);
   const [vaultName, setVaultName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreateVault = async () => {
-    // TODO: Implement vault creation logic here
-    console.log("Creating vault:", vaultName);
+  const handleCreateVault = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!isInitialized) {
+      return;
+    }
+    setIsLoading(true);
+    const { wrappedKey } =
+      await cryptoService.generateAndWrapVaultKey(publicKey);
+
+    await createVault({
+      name: vaultName,
+      wrappedKey,
+    });
+
     setVaultName("");
     setIsOpen(false);
+    setIsLoading(false);
   };
 
   return (
@@ -50,7 +70,7 @@ export function SidebarAddVaultButton() {
                     Create a new vault to organize your secrets.
                   </DialogDescription>
                 </DialogHeader>
-                <div>
+                <form id={CREATE_VAULT_FORM_ID} onSubmit={handleCreateVault}>
                   <Label className="hidden" htmlFor="name">
                     Vault Name
                   </Label>
@@ -60,12 +80,18 @@ export function SidebarAddVaultButton() {
                     onChange={(e) => setVaultName(e.target.value)}
                     placeholder="Enter vault name"
                   />
-                </div>
+                </form>
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
+                    <Button variant="outline" disabled={isLoading}>
+                      Cancel
+                    </Button>
                   </DialogClose>
-                  <Button onClick={handleCreateVault} disabled={!vaultName}>
+                  <Button
+                    type="submit"
+                    disabled={!vaultName || isLoading}
+                    form={CREATE_VAULT_FORM_ID}
+                  >
                     Create Vault
                   </Button>
                 </DialogFooter>
