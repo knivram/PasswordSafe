@@ -20,13 +20,16 @@ import {
   SidebarMenuItem,
 } from "./ui/sidebar";
 import { CryptoService } from "@/lib/crypto";
-import { useKeyStore } from "@/app/context/KeyStore";
+import { useKeyStore } from "@/context/KeyStore";
 import { createVault } from "@/app/actions/_vaultActions";
+import { useQueryClient } from "@tanstack/react-query";
+import { SIDEBAR_VAULT_LIST_QUERY_KEY } from "./sidebar-vault-list";
 
 const CREATE_VAULT_FORM_ID = "create-vault-form";
 
 export function SidebarAddVaultButton() {
   const cryptoService = new CryptoService();
+  const queryClient = useQueryClient();
   const { isInitialized, publicKey } = useKeyStore();
   const [isOpen, setIsOpen] = useState(false);
   const [vaultName, setVaultName] = useState("");
@@ -44,6 +47,10 @@ export function SidebarAddVaultButton() {
     await createVault({
       name: vaultName,
       wrappedKey,
+    });
+
+    queryClient.invalidateQueries({
+      queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
     });
 
     setVaultName("");
