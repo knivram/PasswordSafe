@@ -36,7 +36,7 @@ export class CryptoService {
         hash: "SHA-256",
       },
       false,
-      ["encrypt"]
+      ["encrypt", "wrapKey"]
     );
     const privateKey = await this.decryptPrivateKey(
       wrappedPrivateKeyBase64,
@@ -44,6 +44,17 @@ export class CryptoService {
       salt
     );
     return { publicKey, privateKey };
+  }
+
+  public async generateAndWrapVaultKey(
+    publicKey: CryptoKey
+  ): Promise<{ key: CryptoKey; wrappedKey: string }> {
+    const key = await this.generateAESKey();
+    const vaultKey = await this.wrapAESKey(key, publicKey);
+    return {
+      key,
+      wrappedKey: BufferTransformer.arrayBufferToBase64(vaultKey),
+    };
   }
 
   public async encryptSecret({
@@ -91,6 +102,24 @@ export class CryptoService {
       BufferTransformer.base64ToArrayBuffer(wrappedPrivateKey);
     const saltBuffer = BufferTransformer.base64ToUnit8Array(salt);
     return this.unwrapPrivateKey(wrappedPrivateKeyBuffer, password, saltBuffer);
+  }
+
+  private async generateAESKey(): Promise<CryptoKey> {
+    return crypto.subtle.generateKey(
+      {
+        name: "AES-GCM",
+        length: 256,
+      },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  private async wrapAESKey(
+    key: CryptoKey,
+    pub: CryptoKey
+  ): Promise<ArrayBuffer> {
+    return crypto.subtle.wrapKey("raw", key, pub, { name: "RSA-OAEP" });
   }
 
   private async generateKeyPair(): Promise<{

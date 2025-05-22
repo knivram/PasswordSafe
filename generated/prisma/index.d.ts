@@ -18,6 +18,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  * 
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
+/**
+ * Model Vault
+ * 
+ */
+export type Vault = $Result.DefaultSelection<Prisma.$VaultPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -153,6 +158,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.vault`: Exposes CRUD operations for the **Vault** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Vaults
+    * const vaults = await prisma.vault.findMany()
+    * ```
+    */
+  get vault(): Prisma.VaultDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -593,7 +608,8 @@ export namespace Prisma {
 
 
   export const ModelName: {
-    User: 'User'
+    User: 'User',
+    Vault: 'Vault'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -612,7 +628,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user"
+      modelProps: "user" | "vault"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -687,6 +703,80 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      Vault: {
+        payload: Prisma.$VaultPayload<ExtArgs>
+        fields: Prisma.VaultFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.VaultFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.VaultFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>
+          }
+          findFirst: {
+            args: Prisma.VaultFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.VaultFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>
+          }
+          findMany: {
+            args: Prisma.VaultFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>[]
+          }
+          create: {
+            args: Prisma.VaultCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>
+          }
+          createMany: {
+            args: Prisma.VaultCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.VaultCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>[]
+          }
+          delete: {
+            args: Prisma.VaultDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>
+          }
+          update: {
+            args: Prisma.VaultUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>
+          }
+          deleteMany: {
+            args: Prisma.VaultDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.VaultUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.VaultUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>[]
+          }
+          upsert: {
+            args: Prisma.VaultUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$VaultPayload>
+          }
+          aggregate: {
+            args: Prisma.VaultAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateVault>
+          }
+          groupBy: {
+            args: Prisma.VaultGroupByArgs<ExtArgs>
+            result: $Utils.Optional<VaultGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.VaultCountArgs<ExtArgs>
+            result: $Utils.Optional<VaultCountAggregateOutputType> | number
           }
         }
       }
@@ -775,6 +865,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
+    vault?: VaultOmit
   }
 
   /* Types for Logging */
@@ -863,6 +954,36 @@ export namespace Prisma {
    * Count Types
    */
 
+
+  /**
+   * Count Type UserCountOutputType
+   */
+
+  export type UserCountOutputType = {
+    vaults: number
+  }
+
+  export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    vaults?: boolean | UserCountOutputTypeCountVaultsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserCountOutputType
+     */
+    select?: UserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountVaultsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: VaultWhereInput
+  }
 
 
   /**
@@ -1033,6 +1154,8 @@ export namespace Prisma {
     salt?: boolean
     publicKey?: boolean
     wrappedPrivateKey?: boolean
+    vaults?: boolean | User$vaultsArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1060,10 +1183,18 @@ export namespace Prisma {
   }
 
   export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "salt" | "publicKey" | "wrappedPrivateKey", ExtArgs["result"]["user"]>
+  export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    vaults?: boolean | User$vaultsArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
-    objects: {}
+    objects: {
+      vaults: Prisma.$VaultPayload<ExtArgs>[]
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       email: string
@@ -1464,6 +1595,7 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    vaults<T extends User$vaultsArgs<ExtArgs> = {}>(args?: Subset<T, User$vaultsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1515,6 +1647,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter, which User to fetch.
      */
     where: UserWhereUniqueInput
@@ -1533,6 +1669,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter, which User to fetch.
      */
     where: UserWhereUniqueInput
@@ -1550,6 +1690,10 @@ export namespace Prisma {
      * Omit specific fields from the User
      */
     omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter, which User to fetch.
      */
@@ -1599,6 +1743,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter, which User to fetch.
      */
     where?: UserWhereInput
@@ -1647,6 +1795,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter, which Users to fetch.
      */
     where?: UserWhereInput
@@ -1689,6 +1841,10 @@ export namespace Prisma {
      * Omit specific fields from the User
      */
     omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * The data needed to create a User.
      */
@@ -1737,6 +1893,10 @@ export namespace Prisma {
      * Omit specific fields from the User
      */
     omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * The data needed to update a User.
      */
@@ -1804,6 +1964,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * The filter to search for the User to update in case it exists.
      */
     where: UserWhereUniqueInput
@@ -1830,6 +1994,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter which User to delete.
      */
     where: UserWhereUniqueInput
@@ -1850,6 +2018,30 @@ export namespace Prisma {
   }
 
   /**
+   * User.vaults
+   */
+  export type User$vaultsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    where?: VaultWhereInput
+    orderBy?: VaultOrderByWithRelationInput | VaultOrderByWithRelationInput[]
+    cursor?: VaultWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: VaultScalarFieldEnum | VaultScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1861,6 +2053,1081 @@ export namespace Prisma {
      * Omit specific fields from the User
      */
     omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Vault
+   */
+
+  export type AggregateVault = {
+    _count: VaultCountAggregateOutputType | null
+    _min: VaultMinAggregateOutputType | null
+    _max: VaultMaxAggregateOutputType | null
+  }
+
+  export type VaultMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    name: string | null
+    wrappedKey: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type VaultMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    name: string | null
+    wrappedKey: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type VaultCountAggregateOutputType = {
+    id: number
+    userId: number
+    name: number
+    wrappedKey: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type VaultMinAggregateInputType = {
+    id?: true
+    userId?: true
+    name?: true
+    wrappedKey?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type VaultMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    name?: true
+    wrappedKey?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type VaultCountAggregateInputType = {
+    id?: true
+    userId?: true
+    name?: true
+    wrappedKey?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type VaultAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Vault to aggregate.
+     */
+    where?: VaultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Vaults to fetch.
+     */
+    orderBy?: VaultOrderByWithRelationInput | VaultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: VaultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Vaults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Vaults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Vaults
+    **/
+    _count?: true | VaultCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: VaultMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: VaultMaxAggregateInputType
+  }
+
+  export type GetVaultAggregateType<T extends VaultAggregateArgs> = {
+        [P in keyof T & keyof AggregateVault]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateVault[P]>
+      : GetScalarType<T[P], AggregateVault[P]>
+  }
+
+
+
+
+  export type VaultGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: VaultWhereInput
+    orderBy?: VaultOrderByWithAggregationInput | VaultOrderByWithAggregationInput[]
+    by: VaultScalarFieldEnum[] | VaultScalarFieldEnum
+    having?: VaultScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: VaultCountAggregateInputType | true
+    _min?: VaultMinAggregateInputType
+    _max?: VaultMaxAggregateInputType
+  }
+
+  export type VaultGroupByOutputType = {
+    id: string
+    userId: string
+    name: string
+    wrappedKey: string
+    createdAt: Date
+    updatedAt: Date
+    _count: VaultCountAggregateOutputType | null
+    _min: VaultMinAggregateOutputType | null
+    _max: VaultMaxAggregateOutputType | null
+  }
+
+  type GetVaultGroupByPayload<T extends VaultGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<VaultGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof VaultGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], VaultGroupByOutputType[P]>
+            : GetScalarType<T[P], VaultGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type VaultSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    name?: boolean
+    wrappedKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["vault"]>
+
+  export type VaultSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    name?: boolean
+    wrappedKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["vault"]>
+
+  export type VaultSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    name?: boolean
+    wrappedKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["vault"]>
+
+  export type VaultSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    name?: boolean
+    wrappedKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type VaultOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "name" | "wrappedKey" | "createdAt" | "updatedAt", ExtArgs["result"]["vault"]>
+  export type VaultInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type VaultIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type VaultIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $VaultPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Vault"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      name: string
+      wrappedKey: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["vault"]>
+    composites: {}
+  }
+
+  type VaultGetPayload<S extends boolean | null | undefined | VaultDefaultArgs> = $Result.GetResult<Prisma.$VaultPayload, S>
+
+  type VaultCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<VaultFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: VaultCountAggregateInputType | true
+    }
+
+  export interface VaultDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Vault'], meta: { name: 'Vault' } }
+    /**
+     * Find zero or one Vault that matches the filter.
+     * @param {VaultFindUniqueArgs} args - Arguments to find a Vault
+     * @example
+     * // Get one Vault
+     * const vault = await prisma.vault.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends VaultFindUniqueArgs>(args: SelectSubset<T, VaultFindUniqueArgs<ExtArgs>>): Prisma__VaultClient<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Vault that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {VaultFindUniqueOrThrowArgs} args - Arguments to find a Vault
+     * @example
+     * // Get one Vault
+     * const vault = await prisma.vault.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends VaultFindUniqueOrThrowArgs>(args: SelectSubset<T, VaultFindUniqueOrThrowArgs<ExtArgs>>): Prisma__VaultClient<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Vault that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {VaultFindFirstArgs} args - Arguments to find a Vault
+     * @example
+     * // Get one Vault
+     * const vault = await prisma.vault.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends VaultFindFirstArgs>(args?: SelectSubset<T, VaultFindFirstArgs<ExtArgs>>): Prisma__VaultClient<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Vault that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {VaultFindFirstOrThrowArgs} args - Arguments to find a Vault
+     * @example
+     * // Get one Vault
+     * const vault = await prisma.vault.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends VaultFindFirstOrThrowArgs>(args?: SelectSubset<T, VaultFindFirstOrThrowArgs<ExtArgs>>): Prisma__VaultClient<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Vaults that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {VaultFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Vaults
+     * const vaults = await prisma.vault.findMany()
+     * 
+     * // Get first 10 Vaults
+     * const vaults = await prisma.vault.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const vaultWithIdOnly = await prisma.vault.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends VaultFindManyArgs>(args?: SelectSubset<T, VaultFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Vault.
+     * @param {VaultCreateArgs} args - Arguments to create a Vault.
+     * @example
+     * // Create one Vault
+     * const Vault = await prisma.vault.create({
+     *   data: {
+     *     // ... data to create a Vault
+     *   }
+     * })
+     * 
+     */
+    create<T extends VaultCreateArgs>(args: SelectSubset<T, VaultCreateArgs<ExtArgs>>): Prisma__VaultClient<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Vaults.
+     * @param {VaultCreateManyArgs} args - Arguments to create many Vaults.
+     * @example
+     * // Create many Vaults
+     * const vault = await prisma.vault.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends VaultCreateManyArgs>(args?: SelectSubset<T, VaultCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Vaults and returns the data saved in the database.
+     * @param {VaultCreateManyAndReturnArgs} args - Arguments to create many Vaults.
+     * @example
+     * // Create many Vaults
+     * const vault = await prisma.vault.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Vaults and only return the `id`
+     * const vaultWithIdOnly = await prisma.vault.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends VaultCreateManyAndReturnArgs>(args?: SelectSubset<T, VaultCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Vault.
+     * @param {VaultDeleteArgs} args - Arguments to delete one Vault.
+     * @example
+     * // Delete one Vault
+     * const Vault = await prisma.vault.delete({
+     *   where: {
+     *     // ... filter to delete one Vault
+     *   }
+     * })
+     * 
+     */
+    delete<T extends VaultDeleteArgs>(args: SelectSubset<T, VaultDeleteArgs<ExtArgs>>): Prisma__VaultClient<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Vault.
+     * @param {VaultUpdateArgs} args - Arguments to update one Vault.
+     * @example
+     * // Update one Vault
+     * const vault = await prisma.vault.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends VaultUpdateArgs>(args: SelectSubset<T, VaultUpdateArgs<ExtArgs>>): Prisma__VaultClient<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Vaults.
+     * @param {VaultDeleteManyArgs} args - Arguments to filter Vaults to delete.
+     * @example
+     * // Delete a few Vaults
+     * const { count } = await prisma.vault.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends VaultDeleteManyArgs>(args?: SelectSubset<T, VaultDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Vaults.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {VaultUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Vaults
+     * const vault = await prisma.vault.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends VaultUpdateManyArgs>(args: SelectSubset<T, VaultUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Vaults and returns the data updated in the database.
+     * @param {VaultUpdateManyAndReturnArgs} args - Arguments to update many Vaults.
+     * @example
+     * // Update many Vaults
+     * const vault = await prisma.vault.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Vaults and only return the `id`
+     * const vaultWithIdOnly = await prisma.vault.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends VaultUpdateManyAndReturnArgs>(args: SelectSubset<T, VaultUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Vault.
+     * @param {VaultUpsertArgs} args - Arguments to update or create a Vault.
+     * @example
+     * // Update or create a Vault
+     * const vault = await prisma.vault.upsert({
+     *   create: {
+     *     // ... data to create a Vault
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Vault we want to update
+     *   }
+     * })
+     */
+    upsert<T extends VaultUpsertArgs>(args: SelectSubset<T, VaultUpsertArgs<ExtArgs>>): Prisma__VaultClient<$Result.GetResult<Prisma.$VaultPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Vaults.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {VaultCountArgs} args - Arguments to filter Vaults to count.
+     * @example
+     * // Count the number of Vaults
+     * const count = await prisma.vault.count({
+     *   where: {
+     *     // ... the filter for the Vaults we want to count
+     *   }
+     * })
+    **/
+    count<T extends VaultCountArgs>(
+      args?: Subset<T, VaultCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], VaultCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Vault.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {VaultAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends VaultAggregateArgs>(args: Subset<T, VaultAggregateArgs>): Prisma.PrismaPromise<GetVaultAggregateType<T>>
+
+    /**
+     * Group by Vault.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {VaultGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends VaultGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: VaultGroupByArgs['orderBy'] }
+        : { orderBy?: VaultGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, VaultGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetVaultGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Vault model
+   */
+  readonly fields: VaultFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Vault.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__VaultClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Vault model
+   */
+  interface VaultFieldRefs {
+    readonly id: FieldRef<"Vault", 'String'>
+    readonly userId: FieldRef<"Vault", 'String'>
+    readonly name: FieldRef<"Vault", 'String'>
+    readonly wrappedKey: FieldRef<"Vault", 'String'>
+    readonly createdAt: FieldRef<"Vault", 'DateTime'>
+    readonly updatedAt: FieldRef<"Vault", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Vault findUnique
+   */
+  export type VaultFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * Filter, which Vault to fetch.
+     */
+    where: VaultWhereUniqueInput
+  }
+
+  /**
+   * Vault findUniqueOrThrow
+   */
+  export type VaultFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * Filter, which Vault to fetch.
+     */
+    where: VaultWhereUniqueInput
+  }
+
+  /**
+   * Vault findFirst
+   */
+  export type VaultFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * Filter, which Vault to fetch.
+     */
+    where?: VaultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Vaults to fetch.
+     */
+    orderBy?: VaultOrderByWithRelationInput | VaultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Vaults.
+     */
+    cursor?: VaultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Vaults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Vaults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Vaults.
+     */
+    distinct?: VaultScalarFieldEnum | VaultScalarFieldEnum[]
+  }
+
+  /**
+   * Vault findFirstOrThrow
+   */
+  export type VaultFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * Filter, which Vault to fetch.
+     */
+    where?: VaultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Vaults to fetch.
+     */
+    orderBy?: VaultOrderByWithRelationInput | VaultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Vaults.
+     */
+    cursor?: VaultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Vaults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Vaults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Vaults.
+     */
+    distinct?: VaultScalarFieldEnum | VaultScalarFieldEnum[]
+  }
+
+  /**
+   * Vault findMany
+   */
+  export type VaultFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * Filter, which Vaults to fetch.
+     */
+    where?: VaultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Vaults to fetch.
+     */
+    orderBy?: VaultOrderByWithRelationInput | VaultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Vaults.
+     */
+    cursor?: VaultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Vaults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Vaults.
+     */
+    skip?: number
+    distinct?: VaultScalarFieldEnum | VaultScalarFieldEnum[]
+  }
+
+  /**
+   * Vault create
+   */
+  export type VaultCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Vault.
+     */
+    data: XOR<VaultCreateInput, VaultUncheckedCreateInput>
+  }
+
+  /**
+   * Vault createMany
+   */
+  export type VaultCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Vaults.
+     */
+    data: VaultCreateManyInput | VaultCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Vault createManyAndReturn
+   */
+  export type VaultCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * The data used to create many Vaults.
+     */
+    data: VaultCreateManyInput | VaultCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Vault update
+   */
+  export type VaultUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Vault.
+     */
+    data: XOR<VaultUpdateInput, VaultUncheckedUpdateInput>
+    /**
+     * Choose, which Vault to update.
+     */
+    where: VaultWhereUniqueInput
+  }
+
+  /**
+   * Vault updateMany
+   */
+  export type VaultUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Vaults.
+     */
+    data: XOR<VaultUpdateManyMutationInput, VaultUncheckedUpdateManyInput>
+    /**
+     * Filter which Vaults to update
+     */
+    where?: VaultWhereInput
+    /**
+     * Limit how many Vaults to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Vault updateManyAndReturn
+   */
+  export type VaultUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * The data used to update Vaults.
+     */
+    data: XOR<VaultUpdateManyMutationInput, VaultUncheckedUpdateManyInput>
+    /**
+     * Filter which Vaults to update
+     */
+    where?: VaultWhereInput
+    /**
+     * Limit how many Vaults to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Vault upsert
+   */
+  export type VaultUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Vault to update in case it exists.
+     */
+    where: VaultWhereUniqueInput
+    /**
+     * In case the Vault found by the `where` argument doesn't exist, create a new Vault with this data.
+     */
+    create: XOR<VaultCreateInput, VaultUncheckedCreateInput>
+    /**
+     * In case the Vault was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<VaultUpdateInput, VaultUncheckedUpdateInput>
+  }
+
+  /**
+   * Vault delete
+   */
+  export type VaultDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
+    /**
+     * Filter which Vault to delete.
+     */
+    where: VaultWhereUniqueInput
+  }
+
+  /**
+   * Vault deleteMany
+   */
+  export type VaultDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Vaults to delete
+     */
+    where?: VaultWhereInput
+    /**
+     * Limit how many Vaults to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Vault without action
+   */
+  export type VaultDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vault
+     */
+    select?: VaultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vault
+     */
+    omit?: VaultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VaultInclude<ExtArgs> | null
   }
 
 
@@ -1887,6 +3154,18 @@ export namespace Prisma {
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const VaultScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    name: 'name',
+    wrappedKey: 'wrappedKey',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type VaultScalarFieldEnum = (typeof VaultScalarFieldEnum)[keyof typeof VaultScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -1925,6 +3204,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -1950,6 +3243,7 @@ export namespace Prisma {
     salt?: StringFilter<"User"> | string
     publicKey?: StringFilter<"User"> | string
     wrappedPrivateKey?: StringFilter<"User"> | string
+    vaults?: VaultListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -1958,6 +3252,7 @@ export namespace Prisma {
     salt?: SortOrder
     publicKey?: SortOrder
     wrappedPrivateKey?: SortOrder
+    vaults?: VaultOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -1969,6 +3264,7 @@ export namespace Prisma {
     salt?: StringFilter<"User"> | string
     publicKey?: StringFilter<"User"> | string
     wrappedPrivateKey?: StringFilter<"User"> | string
+    vaults?: VaultListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -1993,12 +3289,73 @@ export namespace Prisma {
     wrappedPrivateKey?: StringWithAggregatesFilter<"User"> | string
   }
 
+  export type VaultWhereInput = {
+    AND?: VaultWhereInput | VaultWhereInput[]
+    OR?: VaultWhereInput[]
+    NOT?: VaultWhereInput | VaultWhereInput[]
+    id?: UuidFilter<"Vault"> | string
+    userId?: StringFilter<"Vault"> | string
+    name?: StringFilter<"Vault"> | string
+    wrappedKey?: StringFilter<"Vault"> | string
+    createdAt?: DateTimeFilter<"Vault"> | Date | string
+    updatedAt?: DateTimeFilter<"Vault"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type VaultOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    name?: SortOrder
+    wrappedKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type VaultWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: VaultWhereInput | VaultWhereInput[]
+    OR?: VaultWhereInput[]
+    NOT?: VaultWhereInput | VaultWhereInput[]
+    userId?: StringFilter<"Vault"> | string
+    name?: StringFilter<"Vault"> | string
+    wrappedKey?: StringFilter<"Vault"> | string
+    createdAt?: DateTimeFilter<"Vault"> | Date | string
+    updatedAt?: DateTimeFilter<"Vault"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type VaultOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    name?: SortOrder
+    wrappedKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: VaultCountOrderByAggregateInput
+    _max?: VaultMaxOrderByAggregateInput
+    _min?: VaultMinOrderByAggregateInput
+  }
+
+  export type VaultScalarWhereWithAggregatesInput = {
+    AND?: VaultScalarWhereWithAggregatesInput | VaultScalarWhereWithAggregatesInput[]
+    OR?: VaultScalarWhereWithAggregatesInput[]
+    NOT?: VaultScalarWhereWithAggregatesInput | VaultScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"Vault"> | string
+    userId?: StringWithAggregatesFilter<"Vault"> | string
+    name?: StringWithAggregatesFilter<"Vault"> | string
+    wrappedKey?: StringWithAggregatesFilter<"Vault"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Vault"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Vault"> | Date | string
+  }
+
   export type UserCreateInput = {
     id: string
     email: string
     salt: string
     publicKey: string
     wrappedPrivateKey: string
+    vaults?: VaultCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -2007,6 +3364,7 @@ export namespace Prisma {
     salt: string
     publicKey: string
     wrappedPrivateKey: string
+    vaults?: VaultUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -2015,6 +3373,7 @@ export namespace Prisma {
     salt?: StringFieldUpdateOperationsInput | string
     publicKey?: StringFieldUpdateOperationsInput | string
     wrappedPrivateKey?: StringFieldUpdateOperationsInput | string
+    vaults?: VaultUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -2023,6 +3382,7 @@ export namespace Prisma {
     salt?: StringFieldUpdateOperationsInput | string
     publicKey?: StringFieldUpdateOperationsInput | string
     wrappedPrivateKey?: StringFieldUpdateOperationsInput | string
+    vaults?: VaultUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -2049,6 +3409,68 @@ export namespace Prisma {
     wrappedPrivateKey?: StringFieldUpdateOperationsInput | string
   }
 
+  export type VaultCreateInput = {
+    id?: string
+    name: string
+    wrappedKey: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutVaultsInput
+  }
+
+  export type VaultUncheckedCreateInput = {
+    id?: string
+    userId: string
+    name: string
+    wrappedKey: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type VaultUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    wrappedKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutVaultsNestedInput
+  }
+
+  export type VaultUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    wrappedKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type VaultCreateManyInput = {
+    id?: string
+    userId: string
+    name: string
+    wrappedKey: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type VaultUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    wrappedKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type VaultUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    wrappedKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -2062,6 +3484,16 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     mode?: QueryMode
     not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type VaultListRelationFilter = {
+    every?: VaultWhereInput
+    some?: VaultWhereInput
+    none?: VaultWhereInput
+  }
+
+  export type VaultOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type UserCountOrderByAggregateInput = {
@@ -2106,8 +3538,152 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type UuidFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidFilter<$PrismaModel> | string
+  }
+
+  export type DateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type VaultCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    name?: SortOrder
+    wrappedKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type VaultMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    name?: SortOrder
+    wrappedKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type VaultMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    name?: SortOrder
+    wrappedKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UuidWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type VaultCreateNestedManyWithoutUserInput = {
+    create?: XOR<VaultCreateWithoutUserInput, VaultUncheckedCreateWithoutUserInput> | VaultCreateWithoutUserInput[] | VaultUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: VaultCreateOrConnectWithoutUserInput | VaultCreateOrConnectWithoutUserInput[]
+    createMany?: VaultCreateManyUserInputEnvelope
+    connect?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+  }
+
+  export type VaultUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<VaultCreateWithoutUserInput, VaultUncheckedCreateWithoutUserInput> | VaultCreateWithoutUserInput[] | VaultUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: VaultCreateOrConnectWithoutUserInput | VaultCreateOrConnectWithoutUserInput[]
+    createMany?: VaultCreateManyUserInputEnvelope
+    connect?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
+  }
+
+  export type VaultUpdateManyWithoutUserNestedInput = {
+    create?: XOR<VaultCreateWithoutUserInput, VaultUncheckedCreateWithoutUserInput> | VaultCreateWithoutUserInput[] | VaultUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: VaultCreateOrConnectWithoutUserInput | VaultCreateOrConnectWithoutUserInput[]
+    upsert?: VaultUpsertWithWhereUniqueWithoutUserInput | VaultUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: VaultCreateManyUserInputEnvelope
+    set?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+    disconnect?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+    delete?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+    connect?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+    update?: VaultUpdateWithWhereUniqueWithoutUserInput | VaultUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: VaultUpdateManyWithWhereWithoutUserInput | VaultUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: VaultScalarWhereInput | VaultScalarWhereInput[]
+  }
+
+  export type VaultUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<VaultCreateWithoutUserInput, VaultUncheckedCreateWithoutUserInput> | VaultCreateWithoutUserInput[] | VaultUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: VaultCreateOrConnectWithoutUserInput | VaultCreateOrConnectWithoutUserInput[]
+    upsert?: VaultUpsertWithWhereUniqueWithoutUserInput | VaultUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: VaultCreateManyUserInputEnvelope
+    set?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+    disconnect?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+    delete?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+    connect?: VaultWhereUniqueInput | VaultWhereUniqueInput[]
+    update?: VaultUpdateWithWhereUniqueWithoutUserInput | VaultUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: VaultUpdateManyWithWhereWithoutUserInput | VaultUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: VaultScalarWhereInput | VaultScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutVaultsInput = {
+    create?: XOR<UserCreateWithoutVaultsInput, UserUncheckedCreateWithoutVaultsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutVaultsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type UserUpdateOneRequiredWithoutVaultsNestedInput = {
+    create?: XOR<UserCreateWithoutVaultsInput, UserUncheckedCreateWithoutVaultsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutVaultsInput
+    upsert?: UserUpsertWithoutVaultsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutVaultsInput, UserUpdateWithoutVaultsInput>, UserUncheckedUpdateWithoutVaultsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -2150,6 +3726,190 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type NestedUuidFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidFilter<$PrismaModel> | string
+  }
+
+  export type NestedDateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedUuidWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type VaultCreateWithoutUserInput = {
+    id?: string
+    name: string
+    wrappedKey: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type VaultUncheckedCreateWithoutUserInput = {
+    id?: string
+    name: string
+    wrappedKey: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type VaultCreateOrConnectWithoutUserInput = {
+    where: VaultWhereUniqueInput
+    create: XOR<VaultCreateWithoutUserInput, VaultUncheckedCreateWithoutUserInput>
+  }
+
+  export type VaultCreateManyUserInputEnvelope = {
+    data: VaultCreateManyUserInput | VaultCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type VaultUpsertWithWhereUniqueWithoutUserInput = {
+    where: VaultWhereUniqueInput
+    update: XOR<VaultUpdateWithoutUserInput, VaultUncheckedUpdateWithoutUserInput>
+    create: XOR<VaultCreateWithoutUserInput, VaultUncheckedCreateWithoutUserInput>
+  }
+
+  export type VaultUpdateWithWhereUniqueWithoutUserInput = {
+    where: VaultWhereUniqueInput
+    data: XOR<VaultUpdateWithoutUserInput, VaultUncheckedUpdateWithoutUserInput>
+  }
+
+  export type VaultUpdateManyWithWhereWithoutUserInput = {
+    where: VaultScalarWhereInput
+    data: XOR<VaultUpdateManyMutationInput, VaultUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type VaultScalarWhereInput = {
+    AND?: VaultScalarWhereInput | VaultScalarWhereInput[]
+    OR?: VaultScalarWhereInput[]
+    NOT?: VaultScalarWhereInput | VaultScalarWhereInput[]
+    id?: UuidFilter<"Vault"> | string
+    userId?: StringFilter<"Vault"> | string
+    name?: StringFilter<"Vault"> | string
+    wrappedKey?: StringFilter<"Vault"> | string
+    createdAt?: DateTimeFilter<"Vault"> | Date | string
+    updatedAt?: DateTimeFilter<"Vault"> | Date | string
+  }
+
+  export type UserCreateWithoutVaultsInput = {
+    id: string
+    email: string
+    salt: string
+    publicKey: string
+    wrappedPrivateKey: string
+  }
+
+  export type UserUncheckedCreateWithoutVaultsInput = {
+    id: string
+    email: string
+    salt: string
+    publicKey: string
+    wrappedPrivateKey: string
+  }
+
+  export type UserCreateOrConnectWithoutVaultsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutVaultsInput, UserUncheckedCreateWithoutVaultsInput>
+  }
+
+  export type UserUpsertWithoutVaultsInput = {
+    update: XOR<UserUpdateWithoutVaultsInput, UserUncheckedUpdateWithoutVaultsInput>
+    create: XOR<UserCreateWithoutVaultsInput, UserUncheckedCreateWithoutVaultsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutVaultsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutVaultsInput, UserUncheckedUpdateWithoutVaultsInput>
+  }
+
+  export type UserUpdateWithoutVaultsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    salt?: StringFieldUpdateOperationsInput | string
+    publicKey?: StringFieldUpdateOperationsInput | string
+    wrappedPrivateKey?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserUncheckedUpdateWithoutVaultsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    salt?: StringFieldUpdateOperationsInput | string
+    publicKey?: StringFieldUpdateOperationsInput | string
+    wrappedPrivateKey?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type VaultCreateManyUserInput = {
+    id?: string
+    name: string
+    wrappedKey: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type VaultUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    wrappedKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type VaultUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    wrappedKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type VaultUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    wrappedKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 
