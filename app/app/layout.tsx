@@ -5,7 +5,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { KeyStoreProvider } from "../context/KeyStore";
+import { KeyStoreProvider } from "@/context/KeyStore";
 
 export default async function Layout({
   children,

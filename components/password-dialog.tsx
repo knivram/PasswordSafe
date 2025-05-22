@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useKeyStoreInit } from "@/app/context/KeyStore";
+import { useKeyStoreInit } from "@/context/KeyStore";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

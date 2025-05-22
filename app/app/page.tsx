@@ -1,6 +1,6 @@
 "use client";
 
-import { useKeyStore } from "../context/KeyStore";
+import { useKeyStore } from "@/context/KeyStore";
 
 export default function Page() {
   const { isInitialized, privateKey, publicKey } = useKeyStore();

@@ -10,9 +10,18 @@ import {
   SidebarMenuItem,
 } from "./ui/sidebar";
 import { Vault } from "@/generated/prisma";
+import { useQuery } from "@tanstack/react-query";
+import { getVaults } from "@/app/actions/_vaultActions";
 
-const SidbarVaultList = ({ vaults }: { vaults: Vault[] }) => {
+const SIDEBAR_VAULT_LIST_QUERY_KEY = "sidebar-vault-list";
+
+const SidebarVaultList = ({ vaults: initialVaults }: { vaults: Vault[] }) => {
   const { vaultId } = useParams();
+  const { data: vaults } = useQuery({
+    queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
+    queryFn: getVaults,
+    initialData: initialVaults,
+  });
 
   return (
     <SidebarGroup>
@@ -32,4 +41,4 @@ const SidbarVaultList = ({ vaults }: { vaults: Vault[] }) => {
   );
 };
 
-export default SidbarVaultList;
+export { SIDEBAR_VAULT_LIST_QUERY_KEY, SidebarVaultList };

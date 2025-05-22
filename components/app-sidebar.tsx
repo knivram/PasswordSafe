@@ -9,7 +9,7 @@ import {
 import { AccountMenu } from "./account-menu";
 import { SidebarAddVaultButton } from "./sidebar-add-vault-button";
 import { getVaults } from "@/app/actions/_vaultActions";
-import SidebarVaultList from "./sidebar-vault-list";
+import { SidebarVaultList } from "./sidebar-vault-list";
 
 export async function AppSidebar({
   ...props
