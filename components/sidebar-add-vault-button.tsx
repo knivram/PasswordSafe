@@ -5,9 +5,11 @@ import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Dialog, DialogClose, DialogDescription } from "@radix-ui/react-dialog";
 import {
+  Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
