@@ -2,13 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ab2b64,
-  deriveKek,
-  generateKeyPair,
-  wrapPrivateKey,
-} from "@/lib/crypto";
-import { finishOnboarding } from "@/app/actions/_authActions";
+import { finishOnboarding } from "@/app/actions/_userActions";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -24,6 +18,9 @@ import { AuthError } from "@/lib/errors";
 import { useUser } from "@clerk/nextjs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { CryptoService } from "@/lib/crypto";
+
+const cryptoService = new CryptoService();
 
 export function SignUpForm({
   className,
@@ -46,21 +43,13 @@ export function SignUpForm({
     }
 
     try {
-      const saltArr = crypto.getRandomValues(new Uint8Array(16));
-      const salt = ab2b64(saltArr.buffer);
-      const { publicKey, privateKey } = await generateKeyPair();
-
-      const kek = await deriveKek(password, saltArr);
-      const wrappedPrivBuf = await wrapPrivateKey(privateKey, kek);
-      const wrappedPrivateKeyB64 = ab2b64(wrappedPrivBuf);
-
-      const pubBuf = await crypto.subtle.exportKey("spki", publicKey);
-      const publicKeyB64 = ab2b64(pubBuf);
+      const { publicKey, wrappedPrivateKey, salt } =
+        await cryptoService.onboarding(password);
 
       await finishOnboarding({
         salt,
-        publicKey: publicKeyB64,
-        wrappedPrivateKey: wrappedPrivateKeyB64,
+        publicKey,
+        wrappedPrivateKey,
       });
 
       await user?.reload();
@@ -87,16 +76,15 @@ export function SignUpForm({
           </CardTitle>
           <CardDescription className="space-y-4">
             <p>
-              Set your <strong>master password</strong>{" "}
-              to finish your onboarding.
+              Set your <strong>master password</strong> to finish your
+              onboarding.
             </p>
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <p>
-                  This password{" "}
-                  <strong>cannot be reset</strong>. If forgotten, you will lose
-                  access to your encrypted data permanently.
+                  This password <strong>cannot be reset</strong>. If forgotten,
+                  you will lose access to your encrypted data permanently.
                 </p>
               </AlertDescription>
             </Alert>
