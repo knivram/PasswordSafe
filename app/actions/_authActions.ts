@@ -1,8 +1,8 @@
 "use server";
 
+import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import { PrismaClient } from "@/generated/prisma";
 import { AuthError } from "@/lib/errors";
-import { clerkClient, currentUser } from "@clerk/nextjs/server";
 
 const prisma = new PrismaClient();
 
@@ -19,6 +19,7 @@ export async function finishOnboarding(data: {
   }
 
   // TODO: handle user without primary email correctly
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const email = user.primaryEmailAddress!.emailAddress;
 
   const { salt, publicKey, wrappedPrivateKey } = data;
@@ -54,7 +55,6 @@ export async function finishOnboarding(data: {
         onboardingComplete: true,
       },
     });
-    console.log("User onboarded successfully.");
   } catch (error) {
     if (error instanceof AuthError) {
       throw error;
