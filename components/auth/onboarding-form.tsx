@@ -1,15 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import { useUser } from "@clerk/nextjs";
+import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  ab2b64,
-  deriveKek,
-  generateKeyPair,
-  wrapPrivateKey,
-} from "@/lib/crypto";
+import React, { useState } from "react";
 import { finishOnboarding } from "@/app/actions/_authActions";
-import { cn } from "@/lib/utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,13 +14,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  ab2b64,
+  deriveKek,
+  generateKeyPair,
+  wrapPrivateKey,
+} from "@/lib/crypto";
 import { AuthError } from "@/lib/errors";
-import { useUser } from "@clerk/nextjs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function SignUpForm({
   className,
