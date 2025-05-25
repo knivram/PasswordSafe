@@ -7,6 +7,7 @@ on:
 
 env:
   NODE_VERSION: "23"
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
 
 jobs:
   ci:
@@ -27,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Type check with TypeScript
+        run: npm run type-check
+
       - name: Check code formatting with Prettier
         run: npm run format
 
@@ -35,7 +39,3 @@ jobs:
 
       - name: Build application
         run: npm run build
-        env:
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_dummy_key_for_ci_build_only
-          CLERK_SECRET_KEY: sk_test_dummy_key_for_ci_build_only
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
