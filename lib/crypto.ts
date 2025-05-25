@@ -12,27 +12,27 @@ export async function generateKeyPair(): Promise<{
       hash: "SHA-256",
     },
     true,
-    ["encrypt", "decrypt"],
+    ["encrypt", "decrypt"]
   );
 }
 
 export async function deriveKek(
   password: string,
-  salt: Uint8Array,
+  salt: Uint8Array
 ): Promise<CryptoKey> {
   const base = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(password),
     "PBKDF2",
     false,
-    ["deriveKey"],
+    ["deriveKey"]
   );
   return crypto.subtle.deriveKey(
     { name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" },
     base,
     { name: "AES-GCM", length: 256 },
     false,
-    ["wrapKey", "unwrapKey"],
+    ["wrapKey", "unwrapKey"]
   );
 }
 
@@ -45,7 +45,7 @@ function pack(iv: Uint8Array, data: ArrayBuffer): ArrayBuffer {
 
 export async function wrapPrivateKey(
   priv: CryptoKey,
-  kek: CryptoKey,
+  kek: CryptoKey
 ): Promise<ArrayBuffer> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const wrapped = await crypto.subtle.wrapKey("pkcs8", priv, kek, {

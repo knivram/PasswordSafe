@@ -87,16 +87,15 @@ export function SignUpForm({
           </CardTitle>
           <CardDescription className="space-y-4">
             <p>
-              Set your <strong>master password</strong>{" "}
-              to finish your onboarding.
+              Set your <strong>master password</strong> to finish your
+              onboarding.
             </p>
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <p>
-                  This password{" "}
-                  <strong>cannot be reset</strong>. If forgotten, you will lose
-                  access to your encrypted data permanently.
+                  This password <strong>cannot be reset</strong>. If forgotten,
+                  you will lose access to your encrypted data permanently.
                 </p>
               </AlertDescription>
             </Alert>
@@ -106,7 +105,7 @@ export function SignUpForm({
           <form onSubmit={handleSignUp} className="space-y-4">
             {error && (
               <div
-                className="p-3 text-sm text-red-500 bg-red-50 rounded-md"
+                className="rounded-md bg-red-50 p-3 text-sm text-red-500"
                 role="alert"
               >
                 {error}
@@ -117,7 +116,7 @@ export function SignUpForm({
                 <div className="flex items-center">
                   <Label htmlFor="password">
                     Master Password{" "}
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       (encryption key)
                     </span>
                   </Label>
@@ -127,7 +126,7 @@ export function SignUpForm({
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -141,7 +140,7 @@ export function SignUpForm({
                   type="password"
                   required
                   value={repeatPassword}
-                  onChange={(e) => setRepeatPassword(e.target.value)}
+                  onChange={e => setRepeatPassword(e.target.value)}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
