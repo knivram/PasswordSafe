@@ -1,5 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 const isOnboardingRoute = createRouteMatcher(["/onboarding"]);
 const isPublicRoute = createRouteMatcher([
@@ -28,7 +28,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   }
 
   // If the user is logged in and the route is protected, let them view.
-  if (userId && !isPublicRoute(req)) return NextResponse.next();
+  if (userId && !isPublicRoute(req)) {
+    return NextResponse.next();
+  }
 });
 
 export const config = {

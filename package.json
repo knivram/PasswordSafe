@@ -7,14 +7,13 @@
     "build": "next build",
     "start": "next start",
     "migrate": "prisma migrate dev",
-    "lint": "next lint",
+    "lint": "next lint --max-warnings 0",
     "lint:fix": "next lint --fix",
-    "lint:strict": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "type-check": "tsc --noEmit",
-    "check-all": "npm run type-check && npm run lint:strict && npm run format",
-    "fix-all": "npm run lint:fix && npm run format:fix"
+    "check": "npm run type-check && npm run lint:strict && npm run format",
+    "fix": "npm run lint:fix && npm run format:fix"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.19.4",
