@@ -1,7 +1,7 @@
 "use server";
 
-import { AuthError } from "@/lib/errors";
 import { clerkClient, currentUser } from "@clerk/nextjs/server";
+import { AuthError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
 export async function finishOnboarding(data: {

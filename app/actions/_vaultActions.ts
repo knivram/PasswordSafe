@@ -1,9 +1,9 @@
 "use server";
 
-import { Vault } from "@/generated/prisma";
+import { currentUser } from "@clerk/nextjs/server";
+import type { Vault } from "@/generated/prisma";
 import { AuthError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { currentUser } from "@clerk/nextjs/server";
 
 export async function createVault({
   name,

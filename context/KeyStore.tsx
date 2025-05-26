@@ -2,11 +2,11 @@
 
 import {
   createContext,
-  ReactNode,
   useCallback,
   useContext,
   useEffect,
   useState,
+  type ReactNode,
 } from "react";
 import { getUserData } from "@/app/actions/_userActions";
 import { CryptoService } from "@/lib/crypto";
@@ -34,6 +34,7 @@ type KeyStoreReadContextType =
       privateKey: CryptoKey;
     };
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- must be done to initialize
 const KeyStoreInitContext = createContext<KeyStoreInitContextType>(null!);
 const KeyStoreReadContext = createContext<KeyStoreReadContextType>({
   isInitialized: false,
