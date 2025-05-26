@@ -1,8 +1,9 @@
 "use client";
 
-import * as React from "react";
+import { useClerk } from "@clerk/nextjs";
 import { LogOutIcon, MoreVerticalIcon } from "lucide-react";
-
+import * as React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +18,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useClerk } from "@clerk/nextjs";
 
 interface AccountMenuProps {
   email: string;
@@ -57,7 +56,7 @@ export function AccountMenu({
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{fullName}</span>
-                <span className="truncate text-xs text-muted-foreground">
+                <span className="text-muted-foreground truncate text-xs">
                   {email}
                 </span>
               </div>
@@ -80,7 +79,7 @@ export function AccountMenu({
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{fullName}</span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="text-muted-foreground truncate text-xs">
                     {email}
                   </span>
                 </div>

@@ -1,5 +1,5 @@
 import { currentUser } from "@clerk/nextjs/server";
-
+import { getVaults } from "@/app/actions/_vaultActions";
 import {
   Sidebar,
   SidebarContent,
@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/sidebar";
 import { AccountMenu } from "./account-menu";
 import { SidebarAddVaultButton } from "./sidebar-add-vault-button";
-import { getVaults } from "@/app/actions/_vaultActions";
 import { SidebarVaultList } from "./sidebar-vault-list";
 
 export async function AppSidebar({
@@ -25,10 +24,11 @@ export async function AppSidebar({
     <Sidebar {...props}>
       <SidebarHeader>
         <AccountMenu
-          email={user.primaryEmailAddress!.emailAddress}
-          fullName={user.fullName!}
-          imageUrl={user.imageUrl!}
-          initials={(user.firstName![0] + user.lastName![0]).toUpperCase()}
+          // TODO: handle edge cases where user data is not available
+          email={user.primaryEmailAddress?.emailAddress || ""}
+          fullName={user.fullName || ""}
+          imageUrl={user.imageUrl || ""}
+          initials={(user.firstName || "")[0] + (user.lastName || "")[0]}
         />
         <SidebarAddVaultButton />
       </SidebarHeader>

@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { useState } from "react";
+import { createVault } from "@/app/actions/_vaultActions";
+import { useKeyStore } from "@/context/KeyStore";
+import { CryptoService } from "@/lib/crypto";
+import { SIDEBAR_VAULT_LIST_QUERY_KEY } from "./sidebar-vault-list";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import {
   Dialog,
   DialogClose,
@@ -15,17 +18,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuItem,
 } from "./ui/sidebar";
-import { CryptoService } from "@/lib/crypto";
-import { useKeyStore } from "@/context/KeyStore";
-import { createVault } from "@/app/actions/_vaultActions";
-import { useQueryClient } from "@tanstack/react-query";
-import { SIDEBAR_VAULT_LIST_QUERY_KEY } from "./sidebar-vault-list";
 
 const CREATE_VAULT_FORM_ID = "create-vault-form";
 
@@ -68,7 +68,7 @@ export function SidebarAddVaultButton() {
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   New Vault
                 </Button>
               </DialogTrigger>
@@ -86,7 +86,7 @@ export function SidebarAddVaultButton() {
                   <Input
                     id="name"
                     value={vaultName}
-                    onChange={(e) => setVaultName(e.target.value)}
+                    onChange={e => setVaultName(e.target.value)}
                     placeholder="Enter vault name"
                   />
                 </form>

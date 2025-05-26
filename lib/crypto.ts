@@ -1,5 +1,3 @@
-// client-side Web Crypto helpers used during registration
-
 export class CryptoService {
   public async onboarding(
     password: string
@@ -238,6 +236,7 @@ const BufferTransformer = {
     const binaryString = atob(base64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
+      // eslint-disable-next-line security/detect-object-injection
       bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes;
@@ -249,6 +248,7 @@ const BufferTransformer = {
   unit8ArrayToBase64: (bytes: Uint8Array): string => {
     let binary = "";
     for (let i = 0; i < bytes.byteLength; i++) {
+      // eslint-disable-next-line security/detect-object-injection
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);

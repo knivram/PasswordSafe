@@ -1,6 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import { getVaults } from "@/app/actions/_vaultActions";
+import type { Vault } from "@/generated/prisma";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -9,9 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar";
-import { Vault } from "@/generated/prisma";
-import { useQuery } from "@tanstack/react-query";
-import { getVaults } from "@/app/actions/_vaultActions";
 
 const SIDEBAR_VAULT_LIST_QUERY_KEY = "sidebar-vault-list";
 
@@ -29,7 +29,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: Vault[] }) => {
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarMenuItem key={"all-vaults"}>
+            <SidebarMenuItem key="all-vaults">
               <SidebarMenuButton
                 isActive={vaultId === undefined}
                 onClick={() => router.push(`/app`)}
@@ -37,7 +37,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: Vault[] }) => {
                 All Vaults
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem key={"favorites"}>
+            <SidebarMenuItem key="favorites">
               <SidebarMenuButton
                 isActive={vaultId === "favorites"}
                 onClick={() => router.push(`/app/favorites`)}
@@ -52,7 +52,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: Vault[] }) => {
         <SidebarGroupLabel>Vaults</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {vaults.map((vault) => (
+            {vaults.map(vault => (
               <SidebarMenuItem key={vault.id}>
                 <SidebarMenuButton
                   isActive={vault.id === vaultId}
