@@ -1,3 +1,5 @@
+import { AddSecretDialog } from "@/components/add-secret-dialog";
+
 export default async function VaultPage({
   params,
 }: {
@@ -5,8 +7,12 @@ export default async function VaultPage({
 }) {
   const vaultId = (await params).vaultId;
   return (
-    <div>
-      <h1>Vault {vaultId}</h1>
+    <div className="p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Vault {vaultId}</h1>
+        <AddSecretDialog vaultId={vaultId} />
+      </div>
+      {/* TODO: Add secrets list here */}
     </div>
   );
 }
