@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useKeyStore } from "@/context/KeyStore";
 import { SecretsClient } from "@/lib/secrets-client";
 import type { SecretData } from "@/types/secret";
+import { SECRETS_LIST_QUERY_KEY } from "./secrets-list";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -19,7 +20,6 @@ import {
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
 
 const CREATE_SECRET_FORM_ID = "create-secret-form";
 
@@ -69,7 +69,7 @@ export function AddSecretDialog({ vaultId }: AddSecretDialogProps) {
 
       // Invalidate queries to refresh the secrets list
       queryClient.invalidateQueries({
-        queryKey: ["secrets", vaultId],
+        queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
       });
 
       // Reset form
@@ -145,10 +145,13 @@ export function AddSecretDialog({ vaultId }: AddSecretDialogProps) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="notes">Notes</Label>
-              <Textarea
+              <textarea
                 id="notes"
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 value={notes}
-                onChange={e => setNotes(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setNotes(e.target.value)
+                }
                 placeholder="Additional notes..."
                 rows={3}
               />
