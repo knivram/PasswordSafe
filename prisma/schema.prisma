@@ -31,4 +31,17 @@ model Vault {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id])
+  secrets    Secret[]
+}
+
+model Secret {
+  id            String   @id @default(uuid()) @db.Uuid
+  vaultId       String   @db.Uuid
+  title         String
+  encryptedData String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  vault         Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+
+  @@index([vaultId])
 }
