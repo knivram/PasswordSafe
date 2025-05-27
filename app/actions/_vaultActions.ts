@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import type { Vault } from "@/generated/prisma";
 import { AuthError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { isValidUUID } from "@/lib/uuid";
 
 export async function createVault({
   name,
@@ -56,4 +57,26 @@ export async function getVaults(): Promise<Vault[]> {
     console.error("Get vaults error:", error);
     throw new AuthError("Failed to get vaults. Please try again later.");
   }
+}
+
+export async function getVault(vaultId: string): Promise<Vault | null> {
+  const user = await currentUser();
+
+  if (!user) {
+    throw new AuthError("You are not signed in.");
+  }
+
+  // Validate UUID format before querying database
+  if (!isValidUUID(vaultId)) {
+    return null;
+  }
+
+  const vault = await prisma.vault.findUnique({
+    where: {
+      id: vaultId,
+      userId: user.id,
+    },
+  });
+
+  return vault;
 }

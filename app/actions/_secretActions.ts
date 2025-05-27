@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import type { Secret } from "@/generated/prisma";
 import { AuthError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { isValidUUID } from "@/lib/uuid";
 
 export interface CreateSecretServerInput {
   vaultId: string;
@@ -25,6 +26,11 @@ export async function createSecret({
 
   if (!user) {
     throw new AuthError("You are not signed in.");
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(vaultId)) {
+    throw new AuthError("Invalid vault ID format.");
   }
 
   try {
@@ -64,6 +70,11 @@ export async function getSecrets(vaultId: string): Promise<Secret[]> {
 
   if (!user) {
     throw new AuthError("You are not signed in.");
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(vaultId)) {
+    throw new AuthError("Invalid vault ID format.");
   }
 
   try {
@@ -106,6 +117,11 @@ export async function getSecret(secretId: string): Promise<Secret | null> {
     throw new AuthError("You are not signed in.");
   }
 
+  // Validate UUID format
+  if (!isValidUUID(secretId)) {
+    return null;
+  }
+
   try {
     // Get the secret and verify ownership through vault
     const secret = await prisma.secret.findFirst({
@@ -138,6 +154,11 @@ export async function updateSecret({
 
   if (!user) {
     throw new AuthError("You are not signed in.");
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(secretId)) {
+    throw new AuthError("Invalid secret ID format.");
   }
 
   try {
@@ -179,6 +200,11 @@ export async function deleteSecret(secretId: string): Promise<void> {
 
   if (!user) {
     throw new AuthError("You are not signed in.");
+  }
+
+  // Validate UUID format
+  if (!isValidUUID(secretId)) {
+    throw new AuthError("Invalid secret ID format.");
   }
 
   try {
