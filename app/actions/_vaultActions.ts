@@ -107,3 +107,52 @@ export const getVault = withErrorHandling(
     };
   })
 );
+
+export async function updateVault({ id, name }: { id: string; name: string }) {
+  const user = await currentUser();
+
+  if (!user) {
+    throw new AuthError("You are not signed in.");
+  }
+
+  try {
+    await prisma.vault.updateMany({
+      where: {
+        id,
+        userId: user.id,
+      },
+      data: {
+        name,
+      },
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      throw error;
+    }
+    console.error("Update vault error:", error);
+    throw new AuthError("Failed to update vault. Please try again later.");
+  }
+}
+
+export async function deleteVault(id: string) {
+  const user = await currentUser();
+
+  if (!user) {
+    throw new AuthError("You are not signed in.");
+  }
+
+  try {
+    await prisma.vault.deleteMany({
+      where: {
+        id,
+        userId: user.id,
+      },
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      throw error;
+    }
+    console.error("Delete vault error:", error);
+    throw new AuthError("Failed to delete vault. Please try again later.");
+  }
+}
