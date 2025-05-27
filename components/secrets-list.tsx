@@ -40,8 +40,7 @@ export function SecretsList({ vaultId }: SecretsListProps) {
       }
       return [];
     },
-    initialData: [],
-    enabled: !!privateKey, // Only run query when privateKey is available
+    enabled: !!privateKey,
   });
 
   const togglePasswordVisibility = (secretId: string) => {
@@ -69,8 +68,8 @@ export function SecretsList({ vaultId }: SecretsListProps) {
     return (
       <div className="grid gap-4">
         {Array.from({ length: 3 }).map((_, index) => (
-          <Card key={index}>
-            <CardHeader className="pb-3">
+          <Card className="gap-2" key={index}>
+            <CardHeader>
               <div className="flex items-center justify-between">
                 <Skeleton className="h-6 w-48" />
                 <Skeleton className="h-8 w-8" />
@@ -108,7 +107,7 @@ export function SecretsList({ vaultId }: SecretsListProps) {
     );
   }
 
-  if (secrets.length === 0) {
+  if (!secrets || secrets.length === 0) {
     return (
       <div className="py-12 text-center">
         <p className="text-muted-foreground">No secrets in this vault yet.</p>
@@ -122,8 +121,8 @@ export function SecretsList({ vaultId }: SecretsListProps) {
   return (
     <div className="grid gap-4">
       {secrets.map(secret => (
-        <Card key={secret.id}>
-          <CardHeader className="pb-3">
+        <Card className="gap-2" key={secret.id}>
+          <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">{secret.title}</CardTitle>
               <DropdownMenu>
