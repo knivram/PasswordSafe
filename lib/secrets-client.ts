@@ -167,5 +167,3 @@ export class SecretsClient {
     return await deleteSecret(secretId);
   }
 }
-
-export const secretsClient = new SecretsClient();
