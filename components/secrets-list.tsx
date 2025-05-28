@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Copy, Eye, EyeOff, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useKeyStore } from "@/context/KeyStore";
 import { SecretsClient } from "@/lib/secrets-client";
 import { Button } from "./ui/button";
@@ -58,7 +59,7 @@ export function SecretsList({ vaultId }: SecretsListProps) {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      // In a production app, you'd want to show a toast notification here
+      toast.success("Copied to clipboard");
     } catch (error) {
       console.error("Failed to copy to clipboard:", error);
     }
