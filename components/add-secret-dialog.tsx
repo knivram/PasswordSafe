@@ -1,11 +1,11 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useKeyStore } from "@/context/KeyStore";
 import { SecretsClient } from "@/lib/secrets-client";
-import type { SecretData } from "@/types/secret";
+import type { SecretData, SecretWithDecryptedData } from "@/types/secret";
 import { SECRETS_LIST_QUERY_KEY } from "./secrets-list";
 import { Button } from "./ui/button";
 import {
@@ -21,29 +21,71 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
-const CREATE_SECRET_FORM_ID = "create-secret-form";
+const SECRET_FORM_ID = "secret-form";
 
 interface AddSecretDialogProps {
   vaultId: string;
+  trigger?: React.ReactNode;
+  secret?: SecretWithDecryptedData; // Optional secret for editing
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AddSecretDialog({ vaultId }: AddSecretDialogProps) {
+export function SecretFormDialog({
+  vaultId,
+  trigger,
+  secret,
+  isOpen,
+  onOpenChange,
+}: AddSecretDialogProps) {
   const secretsClient = new SecretsClient();
   const queryClient = useQueryClient();
   const { isInitialized, publicKey } = useKeyStore();
-  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [_isOpen, _setIsOpen] = useState(false);
 
-  // Form state
+  const isEditing = !!secret;
+
   const [title, setTitle] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleCreateSecret = async (
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
+  // Initialize form with secret data when editing
+  useEffect(() => {
+    if (secret) {
+      setTitle(secret.title);
+      setUsername(secret.data.username || "");
+      setPassword(secret.data.password || "");
+      setUrl(secret.data.url || "");
+      setNotes(secret.data.notes || "");
+    }
+  }, [secret]);
+
+  const resetForm = () => {
+    if (!isEditing) {
+      setTitle("");
+      setUsername("");
+      setPassword("");
+      setUrl("");
+      setNotes("");
+    }
+  };
+
+  // Use external isOpen if provided, otherwise use internal state
+  const dialogOpen = isOpen !== undefined ? isOpen : _isOpen;
+
+  const handleOpenChange = (open: boolean) => {
+    if (isOpen === undefined) {
+      // Uncontrolled mode - manage state internally
+      _setIsOpen(open);
+    }
+    // Always call the callback if provided
+    onOpenChange?.(open);
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!isInitialized) {
       return;
@@ -58,51 +100,59 @@ export function AddSecretDialog({ vaultId }: AddSecretDialogProps) {
         notes: notes || undefined,
       };
 
-      await secretsClient.createSecret(
-        {
-          vaultId,
-          title,
-          data: secretData,
-        },
-        publicKey
-      );
+      if (isEditing) {
+        await secretsClient.updateSecret(
+          secret.id,
+          {
+            title,
+            data: secretData,
+          },
+          publicKey
+        );
+      } else {
+        await secretsClient.createSecret(
+          {
+            vaultId,
+            title,
+            data: secretData,
+          },
+          publicKey
+        );
+      }
 
       // Invalidate queries to refresh the secrets list
       queryClient.invalidateQueries({
         queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
       });
 
-      // Reset form
-      setTitle("");
-      setUsername("");
-      setPassword("");
-      setUrl("");
-      setNotes("");
-      setIsOpen(false);
+      resetForm();
+      handleOpenChange(false);
     } catch (error) {
-      console.error("Failed to create secret:", error);
-      // In a production app, you'd want to show a toast or error message here
+      console.error(
+        `Failed to ${isEditing ? "update" : "create"} secret:`,
+        error
+      );
+      toast.error("Failed to create secret");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Secret
-        </Button>
-      </DialogTrigger>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Add New Secret</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit Secret" : "Add New Secret"}
+          </DialogTitle>
           <DialogDescription>
-            Add a new secret to this vault. All information will be encrypted.
+            {isEditing
+              ? "Update the secret information. All changes will be encrypted."
+              : "Add a new secret to this vault. All information will be encrypted."}
           </DialogDescription>
         </DialogHeader>
-        <form id={CREATE_SECRET_FORM_ID} onSubmit={handleCreateSecret}>
+        <form id={SECRET_FORM_ID} onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="title">Title *</Label>
@@ -167,9 +217,15 @@ export function AddSecretDialog({ vaultId }: AddSecretDialogProps) {
           <Button
             type="submit"
             disabled={!title || isLoading}
-            form={CREATE_SECRET_FORM_ID}
+            form={SECRET_FORM_ID}
           >
-            {isLoading ? "Creating..." : "Create Secret"}
+            {isLoading
+              ? isEditing
+                ? "Updating..."
+                : "Creating..."
+              : isEditing
+                ? "Update Secret"
+                : "Create Secret"}
           </Button>
         </DialogFooter>
       </DialogContent>

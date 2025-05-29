@@ -1,7 +1,8 @@
-import { Lock } from "lucide-react";
+import { Lock, Plus } from "lucide-react";
 import { getVault } from "@/app/actions/_vaultActions";
-import { AddSecretDialog } from "@/components/add-secret-dialog";
+import { SecretFormDialog } from "@/components/add-secret-dialog";
 import { SecretsList } from "@/components/secrets-list";
+import { Button } from "@/components/ui/button";
 
 export default async function VaultPage({
   params,
@@ -34,7 +35,15 @@ export default async function VaultPage({
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">{vault.name}</h1>
-        <AddSecretDialog vaultId={vaultId} />
+        <SecretFormDialog
+          vaultId={vaultId}
+          trigger={
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Secret
+            </Button>
+          }
+        />
       </div>
       <SecretsList vaultId={vaultId} />
     </div>

@@ -1,11 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Eye, EyeOff, MoreHorizontal } from "lucide-react";
+import { Copy, Eye, EyeOff, MoreHorizontal, Edit } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useKeyStore } from "@/context/KeyStore";
 import { SecretsClient } from "@/lib/secrets-client";
+import type { SecretWithDecryptedData } from "@/types/secret";
+import { SecretFormDialog } from "./add-secret-dialog";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
@@ -16,7 +18,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Skeleton } from "./ui/skeleton";
 
-export const SECRETS_LIST_QUERY_KEY = "secrets-list";
+const SECRETS_LIST_QUERY_KEY = "secrets-list";
 
 interface SecretsListProps {
   vaultId: string;
@@ -24,8 +26,11 @@ interface SecretsListProps {
 
 const secretsClient = new SecretsClient();
 
-export function SecretsList({ vaultId }: SecretsListProps) {
+function SecretsList({ vaultId }: SecretsListProps) {
   const { isInitialized, privateKey } = useKeyStore();
+  const [secret, setSecret] = useState<SecretWithDecryptedData | undefined>(
+    undefined
+  );
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(
     new Set()
   );
@@ -121,6 +126,16 @@ export function SecretsList({ vaultId }: SecretsListProps) {
 
   return (
     <div className="grid gap-4">
+      <SecretFormDialog
+        vaultId={vaultId}
+        secret={secret}
+        isOpen={!!secret}
+        onOpenChange={open => {
+          if (!open) {
+            setSecret(undefined);
+          }
+        }}
+      />
       {secrets.map(secret => (
         <Card className="gap-2" key={secret.id}>
           <CardHeader>
@@ -135,9 +150,10 @@ export function SecretsList({ vaultId }: SecretsListProps) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={() => {
-                      // TODO: Implement edit functionality
+                      setSecret(secret);
                     }}
                   >
+                    <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -261,3 +277,5 @@ export function SecretsList({ vaultId }: SecretsListProps) {
     </div>
   );
 }
+
+export { SecretsList, SECRETS_LIST_QUERY_KEY };
