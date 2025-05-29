@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { Copy, Eye, EyeOff, MoreHorizontal, Edit } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy, Eye, EyeOff, MoreHorizontal, Edit, Trash } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useKeyStore } from "@/context/KeyStore";
@@ -27,6 +27,7 @@ interface SecretsListProps {
 const secretsClient = new SecretsClient();
 
 function SecretsList({ vaultId }: SecretsListProps) {
+  const queryClient = useQueryClient();
   const { isInitialized, privateKey } = useKeyStore();
   const [secret, setSecret] = useState<SecretWithDecryptedData | undefined>(
     undefined
@@ -157,11 +158,16 @@ function SecretsList({ vaultId }: SecretsListProps) {
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => {
-                      // TODO: Implement delete functionality
+                    onClick={async () => {
+                      await secretsClient.deleteSecret(secret.id);
+                      await queryClient.invalidateQueries({
+                        queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
+                      });
+                      toast.success("Secret deleted");
                     }}
-                    className="text-destructive"
+                    variant="destructive"
                   >
+                    <Trash className="mr-2 h-4 w-4" />
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
