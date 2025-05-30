@@ -187,7 +187,6 @@ export function SecretFormDialog({
               <Label htmlFor="url">URL</Label>
               <Input
                 id="url"
-                type="url"
                 value={url}
                 onChange={e => setUrl(e.target.value)}
                 placeholder="https://example.com"
