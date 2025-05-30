@@ -1,6 +1,6 @@
 import { Lock, Plus } from "lucide-react";
 import { getVault } from "@/app/actions/_vaultActions";
-import { SecretFormDialog } from "@/components/add-secret-dialog";
+import { SecretFormDialog } from "@/components/secret-form-dialog";
 import { SecretsList } from "@/components/secrets-list";
 import { Button } from "@/components/ui/button";
 

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useKeyStore } from "@/context/KeyStore";
 import { SecretsClient } from "@/lib/secrets-client";
 import type { SecretWithDecryptedData } from "@/types/secret";
-import { SecretFormDialog } from "./add-secret-dialog";
+import { SecretFormDialog } from "./secret-form-dialog";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {

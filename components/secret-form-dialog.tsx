@@ -23,7 +23,7 @@ import { Label } from "./ui/label";
 
 const SECRET_FORM_ID = "secret-form";
 
-interface AddSecretDialogProps {
+interface SecretFormDialogProps {
   vaultId: string;
   trigger?: React.ReactNode;
   secret?: SecretWithDecryptedData; // Optional secret for editing
@@ -37,7 +37,7 @@ export function SecretFormDialog({
   secret,
   isOpen,
   onOpenChange,
-}: AddSecretDialogProps) {
+}: SecretFormDialogProps) {
   const secretsClient = new SecretsClient();
   const queryClient = useQueryClient();
   const { isInitialized, publicKey } = useKeyStore();
@@ -132,7 +132,7 @@ export function SecretFormDialog({
         `Failed to ${isEditing ? "update" : "create"} secret:`,
         error
       );
-      toast.error("Failed to create secret");
+      toast.error(`Failed to ${isEditing ? "update" : "create"} secret`);
     } finally {
       setIsLoading(false);
     }
