@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "migrate": "prisma migrate dev",
-    "generate": "prisma generate",
+    "generate": "prisma generate --no-engine --no-hints",
     "lint": "next lint --max-warnings 0",
     "lint:fix": "next lint --fix",
     "format": "prettier --check .",
