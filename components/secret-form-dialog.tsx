@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useKeyStore } from "@/context/KeyStore";
 import { SecretsClient } from "@/lib/secrets-client";
+import { ensureFullUrl } from "@/lib/utils";
 import type { SecretData, SecretWithDecryptedData } from "@/types/secret";
 import { SECRETS_LIST_QUERY_KEY } from "./secrets-list";
 import { Button } from "./ui/button";
@@ -96,7 +97,7 @@ export function SecretFormDialog({
       const secretData: SecretData = {
         username: username || undefined,
         password: password || undefined,
-        url: url || undefined,
+        url: ensureFullUrl(url),
         notes: notes || undefined,
       };
 
