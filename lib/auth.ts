@@ -1,14 +1,14 @@
 import type { User } from "@clerk/backend";
 import { currentUser } from "@clerk/nextjs/server";
 import type { Secret, Vault } from "@/generated/prisma";
-import { AuthError } from "./errors";
+import { AuthError, ErrorCode, ValidationError, NotFoundError } from "./errors";
 import { prisma } from "./prisma";
 import { isValidUUID } from "./uuid";
 
 export async function requireUser(): Promise<User> {
   const user = await currentUser();
   if (!user) {
-    throw new AuthError("You are not signed in.");
+    throw new AuthError("You are not signed in.", ErrorCode.UNAUTHORIZED);
   }
   return user;
 }
@@ -19,7 +19,10 @@ export async function requireVaultAccess(
   const user = await requireUser();
 
   if (!isValidUUID(vaultId)) {
-    throw new AuthError("Invalid vault ID format.");
+    throw new ValidationError(
+      "Invalid vault ID format.",
+      ErrorCode.INVALID_UUID
+    );
   }
 
   const vault = await prisma.vault.findFirst({
@@ -30,7 +33,7 @@ export async function requireVaultAccess(
   });
 
   if (!vault) {
-    throw new AuthError("Vault not found or access denied.");
+    throw new NotFoundError("Vault not found or access denied.");
   }
 
   return { user, vault };
@@ -42,7 +45,10 @@ export async function requireSecretAccess(
   const user = await requireUser();
 
   if (!isValidUUID(secretId)) {
-    throw new AuthError("Invalid secret ID format.");
+    throw new ValidationError(
+      "Invalid secret ID format.",
+      ErrorCode.INVALID_UUID
+    );
   }
 
   const secret = await prisma.secret.findFirst({
@@ -55,7 +61,7 @@ export async function requireSecretAccess(
   });
 
   if (!secret) {
-    throw new AuthError("Secret not found or access denied.");
+    throw new NotFoundError("Secret not found or access denied.");
   }
 
   return { user, secret };

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { getUserData } from "@/app/actions/_userActions";
 import { CryptoService } from "@/lib/crypto";
+import { isErrorResponse } from "@/lib/query-utils";
 
 const cryptoService = new CryptoService();
 
@@ -57,7 +58,27 @@ export function KeyStoreProvider({ children }: { children: ReactNode }) {
 
   const initializeKeyStore = useCallback(async (masterPassword: string) => {
     try {
-      const userData = await getUserData();
+      const response = await getUserData();
+
+      // Handle error responses
+      if (isErrorResponse(response)) {
+        const { error } = response;
+        console.error(
+          `[${error.code}] Failed to get user data: ${error.message}`
+        );
+
+        // Create a more specific error message for the user
+        const errorMessage =
+          error.code === "UNAUTHORIZED"
+            ? "You need to sign in to access your data."
+            : error.code === "NOT_FOUND"
+              ? "User data not found. Please complete onboarding first."
+              : "Failed to load your encryption keys. Please try again.";
+
+        throw new Error(errorMessage);
+      }
+
+      const userData = response.data;
 
       const { publicKey, privateKey } =
         await cryptoService.importPublicPrivateKey({
