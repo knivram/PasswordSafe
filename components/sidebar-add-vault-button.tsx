@@ -3,9 +3,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { createVault } from "@/app/actions/_vaultActions";
 import { useKeyStore } from "@/context/KeyStore";
 import { CryptoService } from "@/lib/crypto";
+import { isErrorResponse, getErrorInfo } from "@/lib/query-utils";
 import { SIDEBAR_VAULT_LIST_QUERY_KEY } from "./sidebar-vault-list";
 import { Button } from "./ui/button";
 import {
@@ -43,21 +45,51 @@ export function SidebarAddVaultButton() {
       return;
     }
     setIsLoading(true);
-    const { wrappedKey } =
-      await cryptoService.generateAndWrapVaultKey(publicKey);
 
-    await createVault({
-      name: vaultName,
-      wrappedKey,
-    });
+    try {
+      const { wrappedKey } =
+        await cryptoService.generateAndWrapVaultKey(publicKey);
 
-    queryClient.invalidateQueries({
-      queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
-    });
+      const response = await createVault({
+        name: vaultName,
+        wrappedKey,
+      });
 
-    setVaultName("");
-    setIsOpen(false);
-    setIsLoading(false);
+      // Handle error responses
+      if (isErrorResponse(response)) {
+        const { error } = response;
+        console.error(
+          `[${error.code}] Failed to create vault: ${error.message}`
+        );
+
+        const errorMessage =
+          error.code === "UNAUTHORIZED"
+            ? "You need to sign in to create a vault."
+            : error.code === "DATABASE_ERROR"
+              ? "Failed to save vault. Please try again."
+              : error.message;
+
+        toast.error(errorMessage);
+        return;
+      }
+
+      // Success - invalidate queries to refresh the vault list
+      queryClient.invalidateQueries({
+        queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
+      });
+
+      setVaultName("");
+      setIsOpen(false);
+      toast.success("Vault created successfully!");
+    } catch (error) {
+      const errorInfo = getErrorInfo(error);
+      console.error("Create vault error:", error);
+      toast.error(
+        errorInfo.message || "Failed to create vault. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -101,7 +133,7 @@ export function SidebarAddVaultButton() {
                     disabled={!vaultName || isLoading}
                     form={CREATE_VAULT_FORM_ID}
                   >
-                    Create Vault
+                    {isLoading ? "Creating..." : "Create Vault"}
                   </Button>
                 </DialogFooter>
               </DialogContent>

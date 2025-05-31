@@ -159,11 +159,18 @@ function SecretsList({ vaultId }: SecretsListProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={async () => {
-                      await secretsClient.deleteSecret(secret.id);
-                      await queryClient.invalidateQueries({
-                        queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
-                      });
-                      toast.success("Secret deleted");
+                      try {
+                        await secretsClient.deleteSecret(secret.id);
+                        await queryClient.invalidateQueries({
+                          queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
+                        });
+                        toast.success("Secret deleted");
+                      } catch (error) {
+                        console.error("Failed to delete secret:", error);
+                        toast.error(
+                          "Failed to delete secret. Please try again."
+                        );
+                      }
                     }}
                     variant="destructive"
                   >
