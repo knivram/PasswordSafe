@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CryptoService } from "@/lib/crypto";
-import { AuthError } from "@/lib/errors";
+import { isErrorResponse, getErrorInfo } from "@/lib/query-utils";
 import { cn } from "@/lib/utils";
 
 const cryptoService = new CryptoService();
@@ -39,6 +39,7 @@ export function SignUpForm({
     setIsLoading(true);
     if (password !== repeatPassword) {
       setError("Passwords do not match");
+      setIsLoading(false);
       return;
     }
 
@@ -46,22 +47,36 @@ export function SignUpForm({
       const { publicKey, wrappedPrivateKey, salt } =
         await cryptoService.onboarding(password);
 
-      await finishOnboarding({
+      const response = await finishOnboarding({
         salt,
         publicKey,
         wrappedPrivateKey,
       });
 
-      await user?.reload();
+      // Handle error responses
+      if (isErrorResponse(response)) {
+        const { error } = response;
+        console.error(`[${error.code}] Onboarding failed: ${error.message}`);
 
+        const errorMessage =
+          error.code === "ONBOARDING_FAILED"
+            ? "Failed to complete onboarding. Please try again."
+            : error.code === "UNAUTHORIZED"
+              ? "Authentication failed. Please sign in again."
+              : error.message;
+
+        setError(errorMessage);
+        return;
+      }
+
+      await user?.reload();
       router.push("/");
     } catch (error) {
-      if (error instanceof AuthError) {
-        setError(error.message);
-      } else {
-        console.error("Finish onboarding error:", error);
-        setError("An unexpected error occurred. Please try again.");
-      }
+      const errorInfo = getErrorInfo(error);
+      console.error("Finish onboarding error:", error);
+      setError(
+        errorInfo.message || "An unexpected error occurred. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
