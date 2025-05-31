@@ -6,7 +6,6 @@ import {
   getSecret,
   updateSecret,
   deleteSecret,
-  type CreateSecretServerInput,
   type UpdateSecretServerInput,
 } from "@/app/actions/_secretActions";
 import type { Secret } from "@/generated/prisma";
@@ -36,13 +35,11 @@ export class SecretsClient {
         publicKey,
       });
 
-      const serverInput: CreateSecretServerInput = {
+      return await createSecret({
         vaultId: input.vaultId,
         title: input.title,
         encryptedData,
-      };
-
-      return await createSecret(serverInput);
+      });
     } catch (error) {
       console.error("Failed to create secret:", error);
       throw new Error("Failed to create secret. Please try again.");
@@ -50,11 +47,11 @@ export class SecretsClient {
   }
 
   async getSecrets(vaultId: string): Promise<Secret[]> {
-    return await getSecrets(vaultId);
+    return await getSecrets({ vaultId });
   }
 
   async getSecret(secretId: string): Promise<Secret | null> {
-    return await getSecret(secretId);
+    return await getSecret({ secretId });
   }
 
   async getSecretsWithDecryptedData(
@@ -62,7 +59,7 @@ export class SecretsClient {
     privateKey: CryptoKey
   ): Promise<SecretWithDecryptedData[]> {
     try {
-      const encryptedSecrets = await getSecrets(vaultId);
+      const encryptedSecrets = await getSecrets({ vaultId });
 
       const decryptedSecrets: SecretWithDecryptedData[] = [];
 
@@ -103,7 +100,7 @@ export class SecretsClient {
     privateKey: CryptoKey
   ): Promise<SecretWithDecryptedData | null> {
     try {
-      const encryptedSecret = await getSecret(secretId);
+      const encryptedSecret = await getSecret({ secretId });
 
       if (!encryptedSecret) {
         return null;
@@ -164,6 +161,6 @@ export class SecretsClient {
   }
 
   async deleteSecret(secretId: string): Promise<void> {
-    return await deleteSecret(secretId);
+    return await deleteSecret({ secretId });
   }
 }

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 
 export const finishOnboarding = withAuth(
   async (
-    user,
+    { user },
     data: {
       salt: string;
       publicKey: string;
@@ -65,7 +65,7 @@ export const finishOnboarding = withAuth(
   }
 );
 
-export const getUserData = withAuth(async user => {
+export const getUserData = withAuth(async ({ user }) => {
   const userData = await prisma.user.findUnique({
     where: { id: user.id },
     select: {

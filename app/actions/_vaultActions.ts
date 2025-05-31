@@ -1,14 +1,13 @@
 "use server";
 
 import type { Vault } from "@/generated/prisma";
-import { withAuth } from "@/lib/auth";
+import { withAuth, withVaultAccess } from "@/lib/auth";
 import { AuthError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { isValidUUID } from "@/lib/uuid";
 
 export const createVault = withAuth(
   async (
-    user,
+    { user },
     {
       name,
       wrappedKey,
@@ -35,7 +34,7 @@ export const createVault = withAuth(
   }
 );
 
-export const getVaults = withAuth(async user => {
+export const getVaults = withAuth(async ({ user }) => {
   try {
     const vaults = await prisma.vault.findMany({
       where: {
@@ -52,20 +51,6 @@ export const getVaults = withAuth(async user => {
   }
 });
 
-export const getVault = withAuth(
-  async (user, vaultId: string): Promise<Vault | null> => {
-    // Validate UUID format before querying database
-    if (!isValidUUID(vaultId)) {
-      return null;
-    }
-
-    const vault = await prisma.vault.findUnique({
-      where: {
-        id: vaultId,
-        userId: user.id,
-      },
-    });
-
-    return vault;
-  }
-);
+export const getVault = withVaultAccess(async ({ vault }): Promise<Vault> => {
+  return vault;
+});
