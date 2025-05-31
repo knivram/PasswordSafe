@@ -10,7 +10,7 @@ export default async function VaultPage({
   params: Promise<{ vaultId: string }>;
 }) {
   const vaultId = (await params).vaultId;
-  const vault = await getVault(vaultId);
+  const vault = await getVault({ vaultId });
 
   if (!vault) {
     return (

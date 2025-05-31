@@ -62,30 +62,28 @@ export async function requireSecretAccess(
 }
 
 export function withAuth<A extends unknown[], R>(
-  fn: (user: User, ...args: A) => Promise<R> | R
+  fn: (context: { user: User }, ...args: A) => Promise<R> | R
 ): (...args: A) => Promise<R> {
   return async (...args: A) => {
     const user = await requireUser();
-    return fn(user, ...args);
+    return fn({ user }, ...args);
   };
 }
 
-export function withVaultAccess<T extends { vaultId: string } | string, R>(
+export function withVaultAccess<T extends object, R>(
   fn: (context: { user: User; vault: Vault }, input: T) => Promise<R> | R
-): (input: T) => Promise<R> {
-  return async (input: T) => {
-    const vaultId = typeof input === "string" ? input : input.vaultId;
-    const context = await requireVaultAccess(vaultId);
+): (input: { vaultId: string } & T) => Promise<R> {
+  return async (input: { vaultId: string } & T) => {
+    const context = await requireVaultAccess(input.vaultId);
     return fn(context, input);
   };
 }
 
-export function withSecretAccess<T extends { secretId: string } | string, R>(
+export function withSecretAccess<T extends object, R>(
   fn: (context: { user: User; secret: Secret }, input: T) => Promise<R> | R
-): (input: T) => Promise<R> {
-  return async (input: T) => {
-    const secretId = typeof input === "string" ? input : input.secretId;
-    const context = await requireSecretAccess(secretId);
+): (input: { secretId: string } & T) => Promise<R> {
+  return async (input: { secretId: string } & T) => {
+    const context = await requireSecretAccess(input.secretId);
     return fn(context, input);
   };
 }
