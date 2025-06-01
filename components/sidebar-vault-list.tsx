@@ -123,7 +123,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: Vault[] }) => {
   const { data: vaults } = useQuery({
     queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
     queryFn: getVaults,
-    initialData: initialVaults,
+    placeholderData: initialVaults,
   });
 
   return (
@@ -154,7 +154,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: Vault[] }) => {
         <SidebarGroupLabel>Vaults</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {vaults.map(vault => (
+            {(vaults || []).map(vault => (
               <VaultItem key={vault.id} vault={vault} />
             ))}
           </SidebarMenu>
