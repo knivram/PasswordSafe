@@ -4,11 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreVerticalIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  deleteVault,
-  getVaults,
-  updateVault,
-} from "@/app/actions/_vaultActions";
+import { deleteVault, getVaults } from "@/app/actions/_vaultActions";
 import type { Vault } from "@/generated/prisma";
 import { Button } from "./ui/button";
 import {
@@ -26,8 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -37,6 +31,7 @@ import {
   SidebarMenuItem,
   SidebarMenuAction,
 } from "./ui/sidebar";
+import { VaultFormDialog } from "./vault-form-dialog";
 
 const SIDEBAR_VAULT_LIST_QUERY_KEY = "sidebar-vault-list";
 
@@ -44,18 +39,9 @@ function VaultItem({ vault }: { vault: Vault }) {
   const { vaultId } = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [name, setName] = useState(vault.name);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    await updateVault({ id: vault.id, name });
-    queryClient.invalidateQueries({ queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY] });
-    setIsDialogOpen(false);
-    setIsLoading(false);
-  };
 
   const handleDelete = async () => {
     setIsLoading(true);
@@ -65,6 +51,7 @@ function VaultItem({ vault }: { vault: Vault }) {
     if (vault.id === vaultId) {
       router.push(`/app`);
     }
+    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -82,30 +69,34 @@ function VaultItem({ vault }: { vault: Vault }) {
           </SidebarMenuAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
-          <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>
+          <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={handleDelete} variant="destructive">
+          <DropdownMenuItem
+            onSelect={() => setIsDeleteDialogOpen(true)}
+            variant="destructive"
+          >
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+
+      <VaultFormDialog
+        vault={vault}
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Vault</DialogTitle>
-            <DialogDescription>Change the vault name.</DialogDescription>
+            <DialogTitle>Delete Vault</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &ldquo;{vault.name}&rdquo;? This
+              action cannot be undone and all secrets in this vault will be
+              permanently deleted.
+            </DialogDescription>
           </DialogHeader>
-          <form id={`edit-vault-${vault.id}`} onSubmit={handleUpdate}>
-            <Label htmlFor={`name-${vault.id}`} className="hidden">
-              Vault Name
-            </Label>
-            <Input
-              id={`name-${vault.id}`}
-              value={name}
-              onChange={e => setName(e.target.value)}
-            />
-          </form>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline" disabled={isLoading}>
@@ -113,11 +104,11 @@ function VaultItem({ vault }: { vault: Vault }) {
               </Button>
             </DialogClose>
             <Button
-              form={`edit-vault-${vault.id}`}
-              type="submit"
-              disabled={!name || isLoading}
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isLoading}
             >
-              Save
+              {isLoading ? "Deleting..." : "Delete Vault"}
             </Button>
           </DialogFooter>
         </DialogContent>
