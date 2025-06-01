@@ -73,7 +73,7 @@ function VaultItem({ vault }: { vault: Vault }) {
       </SidebarMenuButton>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <SidebarMenuAction showOnHover>
+          <SidebarMenuAction>
             <MoreVerticalIcon />
           </SidebarMenuAction>
         </DropdownMenuTrigger>
