@@ -135,7 +135,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: VaultWithAccess[]
       const response = await getVaults();
       return handleActionResponse(response);
     },
-    initialData: initialVaults,
+    placeholderData: initialVaults,
   });
 
   // Handle query errors
@@ -211,7 +211,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: VaultWithAccess[]
         <SidebarGroupLabel>My Vaults</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {vaults
+            {(vaults || [])
               .filter(vault => vault.isOwner !== false)
               .map(vault => (
                 <VaultItem key={vault.id} vault={vault} />
@@ -226,7 +226,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: VaultWithAccess[]
           <SidebarGroupLabel>Shared With Me</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {vaults
+              {(vaults || [])
                 .filter(vault => vault.isOwner === false)
                 .map(vault => (
                   <VaultItem key={vault.id} vault={vault} />
