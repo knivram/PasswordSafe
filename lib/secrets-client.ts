@@ -6,10 +6,10 @@ import {
   getSecret,
   updateSecret,
   deleteSecret,
-  type CreateSecretServerInput,
   type UpdateSecretServerInput,
 } from "@/app/actions/_secretActions";
 import type { Secret } from "@/generated/prisma";
+import { handleActionResponse, isErrorResponse } from "@/lib/query-utils";
 import type {
   SecretData,
   CreateSecretInput,
@@ -36,13 +36,13 @@ export class SecretsClient {
         publicKey,
       });
 
-      const serverInput: CreateSecretServerInput = {
+      const response = await createSecret({
         vaultId: input.vaultId,
         title: input.title,
         encryptedData,
-      };
+      });
 
-      return await createSecret(serverInput);
+      return handleActionResponse(response);
     } catch (error) {
       console.error("Failed to create secret:", error);
       throw new Error("Failed to create secret. Please try again.");
@@ -50,11 +50,23 @@ export class SecretsClient {
   }
 
   async getSecrets(vaultId: string): Promise<Secret[]> {
-    return await getSecrets(vaultId);
+    const response = await getSecrets({ vaultId });
+    return handleActionResponse(response);
   }
 
   async getSecret(secretId: string): Promise<Secret | null> {
-    return await getSecret(secretId);
+    const response = await getSecret({ secretId });
+
+    if (isErrorResponse(response)) {
+      // For getSecret, we want to return null if not found rather than throwing
+      if (response.error.code === "NOT_FOUND") {
+        return null;
+      }
+      // For other errors, we still want to throw
+      throw new Error(response.error.message);
+    }
+
+    return response.data;
   }
 
   async getSecretsWithDecryptedData(
@@ -62,7 +74,7 @@ export class SecretsClient {
     privateKey: CryptoKey
   ): Promise<SecretWithDecryptedData[]> {
     try {
-      const encryptedSecrets = await getSecrets(vaultId);
+      const encryptedSecrets = await this.getSecrets(vaultId);
 
       const decryptedSecrets: SecretWithDecryptedData[] = [];
 
@@ -103,7 +115,7 @@ export class SecretsClient {
     privateKey: CryptoKey
   ): Promise<SecretWithDecryptedData | null> {
     try {
-      const encryptedSecret = await getSecret(secretId);
+      const encryptedSecret = await this.getSecret(secretId);
 
       if (!encryptedSecret) {
         return null;
@@ -153,10 +165,12 @@ export class SecretsClient {
         serverUpdates.encryptedData = encryptedData;
       }
 
-      return await updateSecret({
+      const response = await updateSecret({
         secretId,
         updates: serverUpdates,
       });
+
+      return handleActionResponse(response);
     } catch (error) {
       console.error("Failed to update secret:", error);
       throw new Error("Failed to update secret. Please try again.");
@@ -164,6 +178,7 @@ export class SecretsClient {
   }
 
   async deleteSecret(secretId: string): Promise<void> {
-    return await deleteSecret(secretId);
+    const response = await deleteSecret({ secretId });
+    handleActionResponse(response);
   }
 }
