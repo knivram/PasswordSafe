@@ -9,6 +9,11 @@ import {
   NotFoundError,
 } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { createVault } from "./_vaultActions";
+
+
+
+
 
 export const finishOnboarding = withErrorHandling(
   withAuth(
@@ -18,6 +23,7 @@ export const finishOnboarding = withErrorHandling(
         salt: string;
         publicKey: string;
         wrappedPrivateKey: string;
+        generateAndWrapVaultKey:string;
       }
     ) => {
       const client = await clerkClient();
@@ -26,7 +32,7 @@ export const finishOnboarding = withErrorHandling(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const email = user.primaryEmailAddress!.emailAddress;
 
-      const { salt, publicKey, wrappedPrivateKey } = data;
+  const { salt, publicKey, wrappedPrivateKey, generateAndWrapVaultKey } = data;
 
       try {
         // Check if user already exists
@@ -43,16 +49,22 @@ export const finishOnboarding = withErrorHandling(
           return;
         }
 
-        // Persist the new user
-        await prisma.user.create({
-          data: {
-            id: user.id,
-            email,
-            salt,
-            publicKey,
-            wrappedPrivateKey,
-          },
-        });
+    // Persist the new user
+    await prisma.user.create({
+      data: {
+        id: user.id,
+        email,
+        salt,
+        publicKey,
+        wrappedPrivateKey,
+      },
+    });
+
+      await createVault({
+        name: "Private",
+        wrappedKey: generateAndWrapVaultKey,
+      });
+
 
         await client.users.updateUser(user.id, {
           publicMetadata: {
