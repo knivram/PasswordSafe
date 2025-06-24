@@ -9,15 +9,18 @@ PasswordSafe is a secure password management application built with Next.js 15, 
 ## Development Commands
 
 ### Core Development
+
 - `npm run dev` - Start development server on http://localhost:3000
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 
 ### Database
+
 - `npm run migrate` - Run Prisma database migrations
 - `npm run generate` - Generate Prisma client (outputs to `generated/prisma/`)
 
 ### Code Quality
+
 - `npm run lint` - Run ESLint with zero warnings policy
 - `npm run lint:fix` - Auto-fix ESLint issues
 - `npm run type-check` - Run TypeScript compiler without emitting files
@@ -27,17 +30,20 @@ PasswordSafe is a secure password management application built with Next.js 15, 
 - `npm run fix` - Auto-fix all issues (lint + format)
 
 ### Deployment
+
 - `npm run vercel-build` - Deploy migrations and build for Vercel
 
 ## Architecture Overview
 
 ### Security Architecture
+
 - **Zero-knowledge encryption**: All secrets encrypted client-side with RSA-4096 keys
 - **Key management**: Private keys wrapped with AES-GCM using PBKDF2-derived KEK (100,000 iterations)
 - **Vault system**: Each vault has its own wrapped key for compartmentalization
 - **Client-side crypto**: Uses Web Crypto API exclusively (no JavaScript crypto libraries)
 
 ### Data Flow
+
 1. User authenticates with Clerk
 2. Master password derives KEK to unwrap private key (client-side only)
 3. Private key decrypts vault keys
@@ -47,23 +53,27 @@ PasswordSafe is a secure password management application built with Next.js 15, 
 ### Key Components
 
 #### Authentication & Authorization (`lib/auth.ts`)
+
 - `requireUser()` - Validates Clerk authentication
 - `requireVaultAccess()` - Ensures user owns vault
 - `requireSecretAccess()` - Ensures user owns secret through vault ownership
 - `withAuth()`, `withVaultAccess()`, `withSecretAccess()` - Higher-order functions for server actions
 
 #### Cryptography (`lib/crypto.ts`)
+
 - `CryptoService` class handles all cryptographic operations
 - Key generation, wrapping/unwrapping, encryption/decryption
 - Uses RSA-OAEP for key operations, AES-GCM for data encryption
 - PBKDF2 with SHA-256 for key derivation
 
 #### Key Management (`context/KeyStore.tsx`)
+
 - Client-side context for managing decrypted keys in memory
 - Automatically prompts for master password when keys needed
 - Clears keys on logout for security
 
 #### Server Actions (`app/actions/`)
+
 - `_userActions.ts` - User data and onboarding
 - `_vaultActions.ts` - Vault CRUD operations
 - `_secretActions.ts` - Secret CRUD operations
@@ -97,24 +107,35 @@ Secret
 ## Development Guidelines
 
 ### Security Requirements
+
 - Never transmit master passwords or unencrypted secrets to server
 - Always validate UUIDs before database queries
 - Use provided auth wrappers for all server actions
 - Clear sensitive data from memory when possible
 
 ### Code Style
+
 - Strict TypeScript with consistent-type-imports enforced
 - Import ordering: builtin → external → internal → parent → sibling → index
 - Security ESLint rules enabled (no object injection, unsafe regex detection)
 - Prettier with Tailwind plugin for consistent formatting
 
+### UI Components
+
+- Use shadcn/ui components from https://ui.shadcn.com/docs for new UI elements
+- Never create custom UI components when shadcn/ui alternatives exist
+- Install new shadcn/ui components using the CLI rather than manually creating them
+
 ### Error Handling
+
 - Use structured error types from `lib/errors.ts`
 - Server actions wrapped with `withErrorHandling()` for consistent responses
 - Client-side error boundaries for graceful degradation
 
 ### Testing & Validation
+
 Always run quality checks before committing:
+
 ```bash
 npm run check  # Runs type-check + lint + format
 ```
@@ -132,5 +153,6 @@ npm run check  # Runs type-check + lint + format
 ## Environment Setup
 
 Required environment variables:
+
 - `DATABASE_URL` - PostgreSQL connection string
 - Clerk authentication keys (see example.env if available)

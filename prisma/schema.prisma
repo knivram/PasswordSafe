@@ -15,23 +15,21 @@ datasource db {
 }
 
 model User {
-  id                String  @id
-  email             String  @unique
+  id                String        @id
+  email             String        @unique
   salt              String
   publicKey         String
   wrappedPrivateKey String
-  vaults            Vault[]
+  vaultAccess       VaultAccess[]
 }
 
 model Vault {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String
-  name       String
-  wrappedKey String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id])
-  secrets    Secret[]
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  secrets     Secret[]
+  vaultAccess VaultAccess[]
 }
 
 model Secret {
@@ -43,5 +41,27 @@ model Secret {
   updatedAt     DateTime @updatedAt
   vault         Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
 
+  @@index([vaultId])
+}
+
+enum AccessRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model VaultAccess {
+  id         String     @id @default(uuid()) @db.Uuid
+  vaultId    String     @db.Uuid
+  userId     String
+  role       AccessRole
+  wrappedKey String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  vault      Vault      @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([vaultId, userId])
+  @@index([userId])
   @@index([vaultId])
 }

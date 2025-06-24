@@ -91,6 +91,60 @@ export class CryptoService {
     return new TextDecoder().decode(decrypted);
   }
 
+  public async unwrapVaultKey({
+    wrappedKey,
+    privateKey,
+  }: {
+    wrappedKey: string;
+    privateKey: CryptoKey;
+  }): Promise<CryptoKey> {
+    const wrappedKeyBuffer = BufferTransformer.base64ToArrayBuffer(wrappedKey);
+    return crypto.subtle.unwrapKey(
+      "raw",
+      wrappedKeyBuffer,
+      privateKey,
+      { name: "RSA-OAEP" },
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  public async rewrapVaultKeyForUser({
+    wrappedKey,
+    ownerPrivateKey,
+    targetUserPublicKey,
+  }: {
+    wrappedKey: string;
+    ownerPrivateKey: CryptoKey;
+    targetUserPublicKey: CryptoKey;
+  }): Promise<string> {
+    // First unwrap the vault key with the owner's private key
+    const vaultKey = await this.unwrapVaultKey({
+      wrappedKey,
+      privateKey: ownerPrivateKey,
+    });
+
+    // Then wrap it with the target user's public key
+    const newWrappedKey = await this.wrapAESKey(vaultKey, targetUserPublicKey);
+    return BufferTransformer.arrayBufferToBase64(newWrappedKey);
+  }
+
+  public async importPublicKeyFromBase64(
+    publicKeyBase64: string
+  ): Promise<CryptoKey> {
+    return crypto.subtle.importKey(
+      "spki",
+      BufferTransformer.base64ToArrayBuffer(publicKeyBase64),
+      {
+        name: "RSA-OAEP",
+        hash: "SHA-256",
+      },
+      false,
+      ["encrypt", "wrapKey"]
+    );
+  }
+
   private async decryptPrivateKey(
     wrappedPrivateKey: string,
     password: string,
@@ -196,7 +250,7 @@ export class CryptoService {
         hash: "SHA-256",
       },
       true, // extractable? you need it for wrapping vault keys
-      ["decrypt"] // what you want to do with the unwrapped key
+      ["decrypt", "unwrapKey"] // what you want to do with the unwrapped key
     );
 
     return privateKey;

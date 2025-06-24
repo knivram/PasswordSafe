@@ -1,10 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { ShareIcon, UserIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { getVaults } from "@/app/actions/_vaultActions";
-import type { Vault } from "@/generated/prisma";
+import type { Vault, AccessRole } from "@/generated/prisma";
 import { handleActionResponse, getErrorInfo } from "@/lib/query-utils";
+import { Badge } from "./ui/badge";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -14,9 +16,18 @@ import {
   SidebarMenuItem,
 } from "./ui/sidebar";
 
+interface VaultWithAccess extends Vault {
+  isOwner?: boolean;
+  role?: AccessRole | "OWNER";
+}
+
 const SIDEBAR_VAULT_LIST_QUERY_KEY = "sidebar-vault-list";
 
-const SidebarVaultList = ({ vaults: initialVaults }: { vaults: Vault[] }) => {
+const SidebarVaultList = ({
+  vaults: initialVaults,
+}: {
+  vaults: VaultWithAccess[];
+}) => {
   const { vaultId } = useParams();
   const router = useRouter();
   const { data: vaults, error } = useQuery({
@@ -96,23 +107,60 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: Vault[] }) => {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+      {/* Owned Vaults */}
       <SidebarGroup>
-        <SidebarGroupLabel>Vaults</SidebarGroupLabel>
+        <SidebarGroupLabel>My Vaults</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {vaults.map(vault => (
-              <SidebarMenuItem key={vault.id}>
-                <SidebarMenuButton
-                  isActive={vault.id === vaultId}
-                  onClick={() => router.push(`/app/${vault.id}`)}
-                >
-                  {vault.name}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+            {vaults
+              .filter(vault => vault.isOwner !== false)
+              .map(vault => (
+                <SidebarMenuItem key={vault.id}>
+                  <SidebarMenuButton
+                    isActive={vault.id === vaultId}
+                    onClick={() => router.push(`/app/${vault.id}`)}
+                  >
+                    <div className="flex w-full items-center justify-between">
+                      <span>{vault.name}</span>
+                      <UserIcon className="text-muted-foreground size-3" />
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
+      {/* Shared Vaults */}
+      {vaults.some(vault => vault.isOwner === false) && (
+        <SidebarGroup>
+          <SidebarGroupLabel>Shared With Me</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {vaults
+                .filter(vault => vault.isOwner === false)
+                .map(vault => (
+                  <SidebarMenuItem key={vault.id}>
+                    <SidebarMenuButton
+                      isActive={vault.id === vaultId}
+                      onClick={() => router.push(`/app/${vault.id}`)}
+                    >
+                      <div className="flex w-full items-center justify-between">
+                        <span>{vault.name}</span>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="outline" className="px-1 text-xs">
+                            {vault.role?.toLowerCase()}
+                          </Badge>
+                          <ShareIcon className="text-muted-foreground size-3" />
+                        </div>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
     </>
   );
 };

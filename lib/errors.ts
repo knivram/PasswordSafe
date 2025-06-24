@@ -6,6 +6,7 @@ export enum ErrorCode {
   // Validation errors
   INVALID_INPUT = "INVALID_INPUT",
   INVALID_UUID = "INVALID_UUID",
+  VALIDATION_ERROR = "VALIDATION_ERROR",
 
   // Resource errors
   NOT_FOUND = "NOT_FOUND",
