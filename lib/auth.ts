@@ -1,6 +1,11 @@
 import type { User } from "@clerk/backend";
 import { currentUser } from "@clerk/nextjs/server";
-import type { Secret, Vault } from "@/generated/prisma";
+import type {
+  AccessRole,
+  Secret,
+  Vault,
+  VaultAccess,
+} from "@/generated/prisma";
 import { AuthError, ErrorCode, ValidationError, NotFoundError } from "./errors";
 import { prisma } from "./prisma";
 import { isValidUUID } from "./uuid";
@@ -15,7 +20,7 @@ export async function requireUser(): Promise<User> {
 
 export async function requireVaultAccess(
   vaultId: string
-): Promise<{ user: User; vault: Vault }> {
+): Promise<{ user: User; vault: Vault; vaultAccess: VaultAccess }> {
   const user = await requireUser();
 
   if (!isValidUUID(vaultId)) {
@@ -25,23 +30,74 @@ export async function requireVaultAccess(
     );
   }
 
-  const vault = await prisma.vault.findFirst({
+  // All access now goes through VaultAccess table
+  const vaultAccess = await prisma.vaultAccess.findFirst({
     where: {
-      id: vaultId,
+      vaultId,
       userId: user.id,
+    },
+    include: {
+      vault: true,
     },
   });
 
-  if (!vault) {
+  if (!vaultAccess) {
     throw new NotFoundError("Vault not found or access denied.");
   }
 
-  return { user, vault };
+  return { user, vault: vaultAccess.vault, vaultAccess };
+}
+
+export async function requireVaultOwnership(
+  vaultId: string
+): Promise<{ user: User; vault: Vault; vaultAccess: VaultAccess }> {
+  const user = await requireUser();
+
+  if (!isValidUUID(vaultId)) {
+    throw new ValidationError(
+      "Invalid vault ID format.",
+      ErrorCode.INVALID_UUID
+    );
+  }
+
+  // Check for OWNER role in VaultAccess
+  const vaultAccess = await prisma.vaultAccess.findFirst({
+    where: {
+      vaultId,
+      userId: user.id,
+      role: "OWNER",
+    },
+    include: {
+      vault: true,
+    },
+  });
+
+  if (!vaultAccess) {
+    throw new NotFoundError("Vault not found or you are not the owner.");
+  }
+
+  return { user, vault: vaultAccess.vault, vaultAccess };
+}
+
+export function hasVaultPermission(
+  access: { vaultAccess: VaultAccess },
+  user: User,
+  requiredRole: AccessRole
+): boolean {
+  // Permission hierarchy: OWNER > EDITOR > VIEWER
+  const roleHierarchy = {
+    OWNER: 3,
+    EDITOR: 2,
+    VIEWER: 1,
+  } as const;
+
+  // eslint-disable-next-line security/detect-object-injection
+  return roleHierarchy[access.vaultAccess.role] >= roleHierarchy[requiredRole];
 }
 
 export async function requireSecretAccess(
   secretId: string
-): Promise<{ user: User; secret: Secret }> {
+): Promise<{ user: User; secret: Secret; vaultAccess: VaultAccess }> {
   const user = await requireUser();
 
   if (!isValidUUID(secretId)) {
@@ -51,20 +107,40 @@ export async function requireSecretAccess(
     );
   }
 
-  const secret = await prisma.secret.findFirst({
+  // Find secret through VaultAccess
+  const secretWithAccess = await prisma.secret.findFirst({
     where: {
       id: secretId,
       vault: {
-        userId: user.id,
+        vaultAccess: {
+          some: {
+            userId: user.id,
+          },
+        },
+      },
+    },
+    include: {
+      vault: {
+        include: {
+          vaultAccess: {
+            where: {
+              userId: user.id,
+            },
+          },
+        },
       },
     },
   });
 
-  if (!secret) {
+  if (!secretWithAccess || secretWithAccess.vault.vaultAccess.length === 0) {
     throw new NotFoundError("Secret not found or access denied.");
   }
 
-  return { user, secret };
+  return {
+    user,
+    secret: secretWithAccess,
+    vaultAccess: secretWithAccess.vault.vaultAccess[0],
+  };
 }
 
 export function withAuth<A extends unknown[], R>(
@@ -77,7 +153,10 @@ export function withAuth<A extends unknown[], R>(
 }
 
 export function withVaultAccess<T extends object, R>(
-  fn: (context: { user: User; vault: Vault }, input: T) => Promise<R> | R
+  fn: (
+    context: { user: User; vault: Vault; vaultAccess: VaultAccess },
+    input: T
+  ) => Promise<R> | R
 ): (input: { vaultId: string } & T) => Promise<R> {
   return async (input: { vaultId: string } & T) => {
     const context = await requireVaultAccess(input.vaultId);
@@ -85,8 +164,23 @@ export function withVaultAccess<T extends object, R>(
   };
 }
 
+export function withVaultOwnership<T extends object, R>(
+  fn: (
+    context: { user: User; vault: Vault; vaultAccess: VaultAccess },
+    input: T
+  ) => Promise<R> | R
+): (input: { vaultId: string } & T) => Promise<R> {
+  return async (input: { vaultId: string } & T) => {
+    const context = await requireVaultOwnership(input.vaultId);
+    return fn(context, input);
+  };
+}
+
 export function withSecretAccess<T extends object, R>(
-  fn: (context: { user: User; secret: Secret }, input: T) => Promise<R> | R
+  fn: (
+    context: { user: User; secret: Secret; vaultAccess: VaultAccess },
+    input: T
+  ) => Promise<R> | R
 ): (input: { secretId: string } & T) => Promise<R> {
   return async (input: { secretId: string } & T) => {
     const context = await requireSecretAccess(input.secretId);

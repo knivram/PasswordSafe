@@ -1,8 +1,9 @@
-import { Lock, Plus } from "lucide-react";
+import { Lock, Plus, Share } from "lucide-react";
 import { getVault } from "@/app/actions/_vaultActions";
 import { SecretFormDialog } from "@/components/secret-form-dialog";
 import { SecretsList } from "@/components/secrets-list";
 import { Button } from "@/components/ui/button";
+import { VaultSharingDialog } from "@/components/vault-sharing-dialog";
 import { isErrorResponse } from "@/lib/query-utils";
 
 export default async function VaultPage({
@@ -44,18 +45,52 @@ export default async function VaultPage({
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{vault.name}</h1>
-        <SecretFormDialog
-          vaultId={vaultId}
-          trigger={
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Secret
-            </Button>
-          }
-        />
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">{vault.name}</h1>
+          {!vault.isOwner && (
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+              {vault.role?.toLowerCase()}
+            </span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {vault.isOwner && (
+            <VaultSharingDialog
+              vaultId={vaultId}
+              vaultName={vault.name}
+              wrappedKey={vault.wrappedKey}
+              trigger={
+                <Button variant="outline">
+                  <Share className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+              }
+            />
+          )}
+          {(vault.isOwner || vault.role === "EDITOR") && (
+            <SecretFormDialog
+              vaultId={vaultId}
+              trigger={
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Secret
+                </Button>
+              }
+            />
+          )}
+        </div>
       </div>
-      <SecretsList vaultId={vaultId} />
+
+      {vault.role === "VIEWER" && (
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm text-blue-800">
+            You have view-only access to this vault. You can see all secrets but
+            cannot add, edit, or delete them.
+          </p>
+        </div>
+      )}
+
+      <SecretsList vaultId={vaultId} vault={vault} />
     </div>
   );
 }

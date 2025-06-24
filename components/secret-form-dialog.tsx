@@ -41,7 +41,7 @@ export function SecretFormDialog({
 }: SecretFormDialogProps) {
   const secretsClient = new SecretsClient();
   const queryClient = useQueryClient();
-  const { isInitialized, publicKey } = useKeyStore();
+  const { isInitialized, privateKey } = useKeyStore();
   const [isLoading, setIsLoading] = useState(false);
   const [_isOpen, _setIsOpen] = useState(false);
 
@@ -88,7 +88,8 @@ export function SecretFormDialog({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isInitialized) {
+    if (!isInitialized || !privateKey) {
+      toast.error("Please unlock your vault first");
       return;
     }
     setIsLoading(true);
@@ -108,7 +109,7 @@ export function SecretFormDialog({
             title,
             data: secretData,
           },
-          publicKey
+          privateKey
         );
       } else {
         await secretsClient.createSecret(
@@ -117,13 +118,17 @@ export function SecretFormDialog({
             title,
             data: secretData,
           },
-          publicKey
+          privateKey
         );
       }
 
-      // Invalidate queries to refresh the secrets list
+      // Invalidate queries to refresh the secrets list for all users
       queryClient.invalidateQueries({
         queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
+      });
+      // Also invalidate for all users who might have access to this vault
+      queryClient.invalidateQueries({
+        queryKey: [SECRETS_LIST_QUERY_KEY],
       });
 
       resetForm();

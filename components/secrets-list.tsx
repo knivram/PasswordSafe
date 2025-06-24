@@ -22,11 +22,15 @@ const SECRETS_LIST_QUERY_KEY = "secrets-list";
 
 interface SecretsListProps {
   vaultId: string;
+  vault?: {
+    isOwner?: boolean;
+    role?: string;
+  };
 }
 
 const secretsClient = new SecretsClient();
 
-function SecretsList({ vaultId }: SecretsListProps) {
+function SecretsList({ vaultId, vault }: SecretsListProps) {
   const queryClient = useQueryClient();
   const { isInitialized, privateKey } = useKeyStore();
   const [secret, setSecret] = useState<SecretWithDecryptedData | undefined>(
@@ -142,43 +146,49 @@ function SecretsList({ vaultId }: SecretsListProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">{secret.title}</CardTitle>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSecret(secret);
-                    }}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={async () => {
-                      try {
-                        await secretsClient.deleteSecret(secret.id);
-                        await queryClient.invalidateQueries({
-                          queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
-                        });
-                        toast.success("Secret deleted");
-                      } catch (error) {
-                        console.error("Failed to delete secret:", error);
-                        toast.error(
-                          "Failed to delete secret. Please try again."
-                        );
-                      }
-                    }}
-                    variant="destructive"
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {(vault?.isOwner || vault?.role === "EDITOR") && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSecret(secret);
+                      }}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        try {
+                          await secretsClient.deleteSecret(secret.id);
+                          await queryClient.invalidateQueries({
+                            queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
+                          });
+                          // Also invalidate for all users who might have access to this vault
+                          await queryClient.invalidateQueries({
+                            queryKey: [SECRETS_LIST_QUERY_KEY],
+                          });
+                          toast.success("Secret deleted");
+                        } catch (error) {
+                          console.error("Failed to delete secret:", error);
+                          toast.error(
+                            "Failed to delete secret. Please try again."
+                          );
+                        }
+                      }}
+                      variant="destructive"
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-3">

@@ -1,7 +1,11 @@
 "use server";
 
 import type { Secret } from "@/generated/prisma";
-import { withVaultAccess, withSecretAccess } from "@/lib/auth";
+import {
+  withVaultAccess,
+  withSecretAccess,
+  hasVaultPermission,
+} from "@/lib/auth";
 import { AppError, ErrorCode, withErrorHandling } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
@@ -11,6 +15,20 @@ export const createSecret = withErrorHandling(
       ctx,
       input: { title: string; encryptedData: string }
     ): Promise<Secret> => {
+      // Check if user has permission to create secrets (EDITOR or OWNER)
+      if (
+        !hasVaultPermission(
+          { vaultAccess: ctx.vaultAccess },
+          ctx.user,
+          "EDITOR"
+        )
+      ) {
+        throw new AppError(
+          "You don't have permission to create secrets in this vault.",
+          ErrorCode.FORBIDDEN
+        );
+      }
+
       const { title, encryptedData } = input;
 
       try {
@@ -86,6 +104,20 @@ export const updateSecret = withErrorHandling(
         updates: UpdateSecretServerInput;
       }
     ): Promise<Secret> => {
+      // Check if user has permission to update secrets (EDITOR or OWNER)
+      if (
+        !hasVaultPermission(
+          { vaultAccess: ctx.vaultAccess },
+          ctx.user,
+          "EDITOR"
+        )
+      ) {
+        throw new AppError(
+          "You don't have permission to update secrets in this vault.",
+          ErrorCode.FORBIDDEN
+        );
+      }
+
       try {
         // Update the secret
         const updatedSecret = await prisma.secret.update({
@@ -110,6 +142,16 @@ export const updateSecret = withErrorHandling(
 
 export const deleteSecret = withErrorHandling(
   withSecretAccess(async (ctx): Promise<void> => {
+    // Check if user has permission to delete secrets (EDITOR or OWNER)
+    if (
+      !hasVaultPermission({ vaultAccess: ctx.vaultAccess }, ctx.user, "EDITOR")
+    ) {
+      throw new AppError(
+        "You don't have permission to delete secrets from this vault.",
+        ErrorCode.FORBIDDEN
+      );
+    }
+
     try {
       await prisma.secret.delete({
         where: { id: ctx.secret.id },
