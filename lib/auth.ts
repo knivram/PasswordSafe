@@ -6,9 +6,45 @@ import type {
   Vault,
   VaultAccess,
 } from "@/generated/prisma";
-import { AuthError, ErrorCode, ValidationError, NotFoundError } from "./errors";
+import {
+  AuthError,
+  ErrorCode,
+  ValidationError,
+  NotFoundError,
+  AppError,
+} from "./errors";
 import { prisma } from "./prisma";
 import { isValidUUID } from "./uuid";
+
+type VaultAccessContext = {
+  user: User;
+  vault: Vault;
+  vaultAccess: VaultAccess;
+  hasVaultPermission: (requiredRole: AccessRole) => boolean;
+};
+
+type SecretAccessContext = {
+  user: User;
+  secret: Secret;
+  vaultAccess: VaultAccess;
+  hasVaultPermission: (requiredRole: AccessRole) => boolean;
+};
+
+function hasVaultPermission(
+  access: VaultAccess,
+  user: User,
+  requiredRole: AccessRole
+): boolean {
+  // Permission hierarchy: OWNER > EDITOR > VIEWER
+  const roleHierarchy = {
+    OWNER: 3,
+    EDITOR: 2,
+    VIEWER: 1,
+  } as const;
+
+  // eslint-disable-next-line security/detect-object-injection
+  return roleHierarchy[access.role] >= roleHierarchy[requiredRole];
+}
 
 export async function requireUser(): Promise<User> {
   const user = await currentUser();
@@ -20,7 +56,7 @@ export async function requireUser(): Promise<User> {
 
 export async function requireVaultAccess(
   vaultId: string
-): Promise<{ user: User; vault: Vault; vaultAccess: VaultAccess }> {
+): Promise<VaultAccessContext> {
   const user = await requireUser();
 
   if (!isValidUUID(vaultId)) {
@@ -45,59 +81,18 @@ export async function requireVaultAccess(
     throw new NotFoundError("Vault not found or access denied.");
   }
 
-  return { user, vault: vaultAccess.vault, vaultAccess };
-}
-
-export async function requireVaultOwnership(
-  vaultId: string
-): Promise<{ user: User; vault: Vault; vaultAccess: VaultAccess }> {
-  const user = await requireUser();
-
-  if (!isValidUUID(vaultId)) {
-    throw new ValidationError(
-      "Invalid vault ID format.",
-      ErrorCode.INVALID_UUID
-    );
-  }
-
-  // Check for OWNER role in VaultAccess
-  const vaultAccess = await prisma.vaultAccess.findFirst({
-    where: {
-      vaultId,
-      userId: user.id,
-      role: "OWNER",
-    },
-    include: {
-      vault: true,
-    },
-  });
-
-  if (!vaultAccess) {
-    throw new NotFoundError("Vault not found or you are not the owner.");
-  }
-
-  return { user, vault: vaultAccess.vault, vaultAccess };
-}
-
-export function hasVaultPermission(
-  access: { vaultAccess: VaultAccess },
-  user: User,
-  requiredRole: AccessRole
-): boolean {
-  // Permission hierarchy: OWNER > EDITOR > VIEWER
-  const roleHierarchy = {
-    OWNER: 3,
-    EDITOR: 2,
-    VIEWER: 1,
-  } as const;
-
-  // eslint-disable-next-line security/detect-object-injection
-  return roleHierarchy[access.vaultAccess.role] >= roleHierarchy[requiredRole];
+  return {
+    user,
+    vault: vaultAccess.vault,
+    vaultAccess,
+    hasVaultPermission: (requiredRole: AccessRole) =>
+      hasVaultPermission(vaultAccess, user, requiredRole),
+  };
 }
 
 export async function requireSecretAccess(
   secretId: string
-): Promise<{ user: User; secret: Secret; vaultAccess: VaultAccess }> {
+): Promise<SecretAccessContext> {
   const user = await requireUser();
 
   if (!isValidUUID(secretId)) {
@@ -140,6 +135,12 @@ export async function requireSecretAccess(
     user,
     secret: secretWithAccess,
     vaultAccess: secretWithAccess.vault.vaultAccess[0],
+    hasVaultPermission: (requiredRole: AccessRole) =>
+      hasVaultPermission(
+        secretWithAccess.vault.vaultAccess[0],
+        user,
+        requiredRole
+      ),
   };
 }
 
@@ -153,10 +154,7 @@ export function withAuth<A extends unknown[], R>(
 }
 
 export function withVaultAccess<T extends object, R>(
-  fn: (
-    context: { user: User; vault: Vault; vaultAccess: VaultAccess },
-    input: T
-  ) => Promise<R> | R
+  fn: (context: VaultAccessContext, input: T) => Promise<R> | R
 ): (input: { vaultId: string } & T) => Promise<R> {
   return async (input: { vaultId: string } & T) => {
     const context = await requireVaultAccess(input.vaultId);
@@ -165,22 +163,24 @@ export function withVaultAccess<T extends object, R>(
 }
 
 export function withVaultOwnership<T extends object, R>(
-  fn: (
-    context: { user: User; vault: Vault; vaultAccess: VaultAccess },
-    input: T
-  ) => Promise<R> | R
+  fn: (context: VaultAccessContext, input: T) => Promise<R> | R
 ): (input: { vaultId: string } & T) => Promise<R> {
   return async (input: { vaultId: string } & T) => {
-    const context = await requireVaultOwnership(input.vaultId);
+    const context = await requireVaultAccess(input.vaultId);
+
+    if (!context.hasVaultPermission("OWNER")) {
+      throw new AppError(
+        "You don't have permission to manage this vault.",
+        ErrorCode.FORBIDDEN
+      );
+    }
+
     return fn(context, input);
   };
 }
 
 export function withSecretAccess<T extends object, R>(
-  fn: (
-    context: { user: User; secret: Secret; vaultAccess: VaultAccess },
-    input: T
-  ) => Promise<R> | R
+  fn: (context: SecretAccessContext, input: T) => Promise<R> | R
 ): (input: { secretId: string } & T) => Promise<R> {
   return async (input: { secretId: string } & T) => {
     const context = await requireSecretAccess(input.secretId);
