@@ -43,13 +43,14 @@ export function SignUpForm({
     }
 
     try {
-      const { publicKey, wrappedPrivateKey, salt } =
+      const { publicKey, wrappedPrivateKey, salt, generateAndWrapVaultKey } =
         await cryptoService.onboarding(password);
 
       await finishOnboarding({
         salt,
         publicKey,
         wrappedPrivateKey,
+        generateAndWrapVaultKey,
       });
 
       await user?.reload();

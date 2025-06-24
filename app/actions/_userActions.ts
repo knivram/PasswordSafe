@@ -3,11 +3,19 @@
 import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import { AuthError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { createVault } from "./_vaultActions";
+
+
+
+
 
 export async function finishOnboarding(data: {
   salt: string;
   publicKey: string;
   wrappedPrivateKey: string;
+  generateAndWrapVaultKey:string;
+
+
 }) {
   const client = await clerkClient();
   const user = await currentUser();
@@ -20,7 +28,7 @@ export async function finishOnboarding(data: {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const email = user.primaryEmailAddress!.emailAddress;
 
-  const { salt, publicKey, wrappedPrivateKey } = data;
+  const { salt, publicKey, wrappedPrivateKey, generateAndWrapVaultKey } = data;
 
   try {
     // Check if user already exists
@@ -45,8 +53,18 @@ export async function finishOnboarding(data: {
         salt,
         publicKey,
         wrappedPrivateKey,
+
+
       },
     });
+
+
+
+      await createVault({
+        name: "Default Vault",
+        wrappedKey: generateAndWrapVaultKey,
+      });
+
 
     await client.users.updateUser(user.id, {
       publicMetadata: {
@@ -67,7 +85,11 @@ export async function getUserData() {
 
   if (!user) {
     throw new AuthError("You are not signed in.");
+
   }
+
+
+
 
   const userData = await prisma.user.findUnique({
     where: { id: user.id },
@@ -75,6 +97,7 @@ export async function getUserData() {
       salt: true,
       wrappedPrivateKey: true,
       publicKey: true,
+
     },
   });
 

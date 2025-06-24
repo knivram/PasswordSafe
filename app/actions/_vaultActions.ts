@@ -59,6 +59,9 @@ export async function getVaults(): Promise<Vault[]> {
   }
 }
 
+
+
+
 export async function getVault(vaultId: string): Promise<Vault | null> {
   const user = await currentUser();
 
@@ -71,10 +74,12 @@ export async function getVault(vaultId: string): Promise<Vault | null> {
     return null;
   }
 
+
   const vault = await prisma.vault.findUnique({
     where: {
       id: vaultId,
       userId: user.id,
+
     },
   });
 
