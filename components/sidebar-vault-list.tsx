@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ShareIcon, UserIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { getVaults } from "@/app/actions/_vaultActions";
-import type { Vault, AccessRole } from "@/generated/prisma";
 import { handleActionResponse, getErrorInfo } from "@/lib/query-utils";
+import { getRoleDisplayName } from "@/lib/utils";
+import type { VaultWithAccess } from "@/types/vault";
 import { Badge } from "./ui/badge";
 import {
   SidebarGroup,
@@ -15,11 +16,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar";
-
-interface VaultWithAccess extends Vault {
-  isOwner?: boolean;
-  role?: AccessRole | "OWNER";
-}
 
 const SIDEBAR_VAULT_LIST_QUERY_KEY = "sidebar-vault-list";
 
@@ -149,7 +145,7 @@ const SidebarVaultList = ({
                         <span>{vault.name}</span>
                         <div className="flex items-center gap-1">
                           <Badge variant="outline" className="px-1 text-xs">
-                            {vault.role?.toLowerCase()}
+                            {getRoleDisplayName(vault.role)}
                           </Badge>
                           <ShareIcon className="text-muted-foreground size-3" />
                         </div>

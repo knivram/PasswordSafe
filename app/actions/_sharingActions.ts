@@ -135,11 +135,6 @@ export const updateVaultAccess = withErrorHandling(
       }
     ) => {
       try {
-        if (!isValidUUID(targetUserId)) {
-          throw new AppError("Invalid user ID format.", ErrorCode.INVALID_UUID);
-        }
-
-        // First check if the access record exists
         const existingAccess = await prisma.vaultAccess.findUnique({
           where: {
             vaultId_userId: {
@@ -156,7 +151,6 @@ export const updateVaultAccess = withErrorHandling(
           );
         }
 
-        // Update the specific record
         await prisma.vaultAccess.update({
           where: {
             vaultId_userId: {

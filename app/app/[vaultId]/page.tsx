@@ -4,7 +4,9 @@ import { SecretFormDialog } from "@/components/secret-form-dialog";
 import { SecretsList } from "@/components/secrets-list";
 import { Button } from "@/components/ui/button";
 import { VaultSharingDialog } from "@/components/vault-sharing-dialog";
+import { AccessRole } from "@/generated/prisma";
 import { isErrorResponse } from "@/lib/query-utils";
+import { getRoleDisplayName } from "@/lib/utils";
 
 export default async function VaultPage({
   params,
@@ -49,7 +51,7 @@ export default async function VaultPage({
           <h1 className="text-2xl font-bold">{vault.name}</h1>
           {!vault.isOwner && (
             <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-              {vault.role?.toLowerCase()}
+              {getRoleDisplayName(vault.role)}
             </span>
           )}
         </div>
@@ -67,7 +69,7 @@ export default async function VaultPage({
               }
             />
           )}
-          {(vault.isOwner || vault.role === "EDITOR") && (
+          {(vault.isOwner || vault.role === AccessRole.EDITOR) && (
             <SecretFormDialog
               vaultId={vaultId}
               trigger={

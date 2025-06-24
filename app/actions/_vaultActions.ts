@@ -1,8 +1,10 @@
 "use server";
 
+import { AccessRole } from "@/generated/prisma";
 import { withAuth, withVaultAccess } from "@/lib/auth";
 import { AppError, ErrorCode, withErrorHandling } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import type { VaultWithAccess } from "@/types/vault";
 
 export const createVault = withErrorHandling(
   withAuth(
@@ -49,7 +51,7 @@ export const createVault = withErrorHandling(
 );
 
 export const getVaults = withErrorHandling(
-  withAuth(async ({ user }) => {
+  withAuth(async ({ user }): Promise<VaultWithAccess[]> => {
     try {
       // Get all vaults through VaultAccess
       const vaultAccesses = await prisma.vaultAccess.findMany({
@@ -74,12 +76,11 @@ export const getVaults = withErrorHandling(
       });
 
       // Transform to expected format
-      const allVaults = vaultAccesses.map(access => ({
+      const allVaults: VaultWithAccess[] = vaultAccesses.map(access => ({
         ...access.vault,
         wrappedKey: access.wrappedKey,
-        isOwner: access.role === "OWNER",
+        isOwner: access.role === AccessRole.OWNER,
         role: access.role,
-        actualWrappedKey: access.wrappedKey,
       }));
 
       return allVaults;
@@ -97,11 +98,11 @@ export const getVaults = withErrorHandling(
 );
 
 export const getVault = withErrorHandling(
-  withVaultAccess(async ({ vault, vaultAccess }) => {
+  withVaultAccess(async ({ vault, vaultAccess }): Promise<VaultWithAccess> => {
     return {
       ...vault,
       wrappedKey: vaultAccess.wrappedKey,
-      isOwner: vaultAccess.role === "OWNER",
+      isOwner: vaultAccess.role === AccessRole.OWNER,
       role: vaultAccess.role,
     };
   })
