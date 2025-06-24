@@ -1,11 +1,7 @@
 "use server";
 
 import type { Secret } from "@/generated/prisma";
-import {
-  withVaultAccess,
-  withSecretAccess,
-  hasVaultPermission,
-} from "@/lib/auth";
+import { withVaultAccess, withSecretAccess } from "@/lib/auth";
 import { AppError, ErrorCode, withErrorHandling } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
@@ -16,13 +12,7 @@ export const createSecret = withErrorHandling(
       input: { title: string; encryptedData: string }
     ): Promise<Secret> => {
       // Check if user has permission to create secrets (EDITOR or OWNER)
-      if (
-        !hasVaultPermission(
-          { vaultAccess: ctx.vaultAccess },
-          ctx.user,
-          "EDITOR"
-        )
-      ) {
+      if (!ctx.hasVaultPermission("EDITOR")) {
         throw new AppError(
           "You don't have permission to create secrets in this vault.",
           ErrorCode.FORBIDDEN
@@ -105,13 +95,7 @@ export const updateSecret = withErrorHandling(
       }
     ): Promise<Secret> => {
       // Check if user has permission to update secrets (EDITOR or OWNER)
-      if (
-        !hasVaultPermission(
-          { vaultAccess: ctx.vaultAccess },
-          ctx.user,
-          "EDITOR"
-        )
-      ) {
+      if (!ctx.hasVaultPermission("EDITOR")) {
         throw new AppError(
           "You don't have permission to update secrets in this vault.",
           ErrorCode.FORBIDDEN
@@ -143,9 +127,7 @@ export const updateSecret = withErrorHandling(
 export const deleteSecret = withErrorHandling(
   withSecretAccess(async (ctx): Promise<void> => {
     // Check if user has permission to delete secrets (EDITOR or OWNER)
-    if (
-      !hasVaultPermission({ vaultAccess: ctx.vaultAccess }, ctx.user, "EDITOR")
-    ) {
+    if (!ctx.hasVaultPermission("EDITOR")) {
       throw new AppError(
         "You don't have permission to delete secrets from this vault.",
         ErrorCode.FORBIDDEN

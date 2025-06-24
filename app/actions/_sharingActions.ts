@@ -9,7 +9,7 @@ import { isValidUUID } from "@/lib/uuid";
 export const shareVault = withErrorHandling(
   withVaultOwnership(
     async (
-      { user, vault, vaultAccess: _vaultAccess },
+      { user, vault },
       {
         targetUserEmail,
         role,
@@ -84,10 +84,7 @@ export const shareVault = withErrorHandling(
 
 export const revokeVaultAccess = withErrorHandling(
   withVaultOwnership(
-    async (
-      { vault, vaultAccess: _vaultAccess },
-      { targetUserId }: { targetUserId: string }
-    ) => {
+    async ({ vault }, { targetUserId }: { targetUserId: string }) => {
       try {
         if (!isValidUUID(targetUserId)) {
           throw new AppError("Invalid user ID format.", ErrorCode.INVALID_UUID);

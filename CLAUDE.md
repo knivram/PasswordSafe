@@ -46,18 +46,26 @@ PasswordSafe is a secure password management application built with Next.js 15, 
 
 1. User authenticates with Clerk
 2. Master password derives KEK to unwrap private key (client-side only)
-3. Private key decrypts vault keys
+3. Private key decrypts vault keys (either owned or shared)
 4. Vault keys encrypt/decrypt individual secrets
 5. Only encrypted data is stored in database
+
+### Vault Sharing
+
+- **Role-based access**: OWNER, EDITOR, VIEWER roles control vault permissions
+- **Secure key sharing**: Vault keys encrypted with recipient's public key
+- **Access management**: Owners can share, revoke, and update permissions
+- **User discovery**: Email-based user search for sharing invitations
 
 ### Key Components
 
 #### Authentication & Authorization (`lib/auth.ts`)
 
 - `requireUser()` - Validates Clerk authentication
-- `requireVaultAccess()` - Ensures user owns vault
-- `requireSecretAccess()` - Ensures user owns secret through vault ownership
-- `withAuth()`, `withVaultAccess()`, `withSecretAccess()` - Higher-order functions for server actions
+- `requireVaultAccess()` - Ensures user has access to vault (owner or shared)
+- `requireVaultOwnership()` - Ensures user owns vault (for management operations)
+- `requireSecretAccess()` - Ensures user has access to secret through vault access
+- `withAuth()`, `withVaultAccess()`, `withVaultOwnership()`, `withSecretAccess()` - Higher-order functions for server actions
 
 #### Cryptography (`lib/crypto.ts`)
 
@@ -77,6 +85,7 @@ PasswordSafe is a secure password management application built with Next.js 15, 
 - `_userActions.ts` - User data and onboarding
 - `_vaultActions.ts` - Vault CRUD operations
 - `_secretActions.ts` - Secret CRUD operations
+- `_sharingActions.ts` - Vault sharing and access management
 - All actions use auth wrappers and error handling
 
 ### Database Schema (PostgreSQL + Prisma)
@@ -88,18 +97,26 @@ User
 ├── salt (for PBKDF2)
 ├── publicKey (base64)
 ├── wrappedPrivateKey (base64)
-└── vaults[]
+└── vaultAccess[]
 
 Vault
 ├── id (UUID)
-├── userId
 ├── name
-├── wrappedKey (encrypted with user's public key)
+├── vaultAccess[]
 └── secrets[]
+
+VaultAccess
+├── id (UUID)
+├── vaultId (UUID)
+├── userId (Clerk user ID)
+├── role (OWNER | EDITOR | VIEWER)
+├── wrappedKey (vault key encrypted with user's public key)
+├── createdAt
+└── updatedAt
 
 Secret
 ├── id (UUID)
-├── vaultId
+├── vaultId (UUID)
 ├── title
 └── encryptedData (encrypted with vault key)
 ```
@@ -111,7 +128,10 @@ Secret
 - Never transmit master passwords or unencrypted secrets to server
 - Always validate UUIDs before database queries
 - Use provided auth wrappers for all server actions
+- Use `withVaultOwnership()` for vault management operations (sharing, deletion)
+- Use `withVaultAccess()` for vault content operations (reading, editing secrets)
 - Clear sensitive data from memory when possible
+- Validate role permissions before allowing operations
 
 ### Code Style
 
