@@ -8,6 +8,7 @@ export interface VaultWithAccess {
   wrappedKey: string;
   isOwner: boolean;
   role: AccessRole;
+  userCount: number;
 }
 
 export interface CreateVaultInput {
