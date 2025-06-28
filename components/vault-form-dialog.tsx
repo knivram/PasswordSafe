@@ -1,11 +1,13 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { createVault, updateVault } from "@/app/actions/_vaultActions";
 import { useKeyStore } from "@/context/KeyStore";
 import type { Vault } from "@/generated/prisma";
 import { CryptoService } from "@/lib/crypto";
+import { getErrorInfo, handleActionResponse } from "@/lib/query-utils";
 import { SIDEBAR_VAULT_LIST_QUERY_KEY } from "./sidebar-vault-list";
 import { Button } from "./ui/button";
 import {
@@ -43,6 +45,39 @@ export function VaultFormDialog({
   const [vaultName, setVaultName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const { mutate: createVaultMutation } = useMutation({
+    mutationFn: async ({
+      name,
+      wrappedKey,
+    }: {
+      name: string;
+      wrappedKey: string;
+    }) => handleActionResponse(await createVault({ name, wrappedKey })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
+      });
+    },
+    onError: error => {
+      const { message } = getErrorInfo(error);
+      toast.error(message);
+    },
+  });
+
+  const { mutate: updateVaultMutation } = useMutation({
+    mutationFn: async ({ vaultId, name }: { vaultId: string; name: string }) =>
+      handleActionResponse(await updateVault({ vaultId, name })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
+      });
+    },
+    onError: error => {
+      const { message } = getErrorInfo(error);
+      toast.error(message);
+    },
+  });
+
   const isEditing = !!vault;
 
   // Initialize form with vault data when editing
@@ -77,33 +112,21 @@ export function VaultFormDialog({
     }
     setIsLoading(true);
 
-    try {
-      if (isEditing) {
-        await updateVault({ id: vault.id, name: vaultName });
-      } else {
-        const { wrappedKey } =
-          await cryptoService.generateAndWrapVaultKey(publicKey);
+    if (isEditing) {
+      updateVaultMutation({ vaultId: vault.id, name: vaultName });
+    } else {
+      const { wrappedKey } =
+        await cryptoService.generateAndWrapVaultKey(publicKey);
 
-        await createVault({
-          name: vaultName,
-          wrappedKey,
-        });
-      }
-
-      queryClient.invalidateQueries({
-        queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
+      createVaultMutation({
+        name: vaultName,
+        wrappedKey,
       });
-
-      resetForm();
-      handleOpenChange(false);
-    } catch (error) {
-      console.error(
-        `Failed to ${isEditing ? "update" : "create"} vault:`,
-        error
-      );
-    } finally {
-      setIsLoading(false);
     }
+
+    resetForm();
+    handleOpenChange(false);
+    setIsLoading(false);
   };
 
   return (

@@ -1,13 +1,14 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreVerticalIcon } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { ShareIcon, UserIcon } from "lucide-react";
+import { MoreVerticalIcon, UsersIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { deleteVault, getVaults } from "@/app/actions/_vaultActions";
-import type { Vault } from "@/generated/prisma";
+import { handleActionResponse, getErrorInfo } from "@/lib/query-utils";
+import { getRoleDisplayName } from "@/lib/utils";
+import type { VaultWithAccess } from "@/types/vault";
+import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -24,13 +25,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { getVaults } from "@/app/actions/_vaultActions";
-import { handleActionResponse, getErrorInfo } from "@/lib/query-utils";
-import { getRoleDisplayName } from "@/lib/utils";
-import type { VaultWithAccess } from "@/types/vault";
-import { Badge } from "./ui/badge";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -44,7 +38,7 @@ import { VaultFormDialog } from "./vault-form-dialog";
 
 const SIDEBAR_VAULT_LIST_QUERY_KEY = "sidebar-vault-list";
 
-function VaultItem({ vault }: { vault: Vault }) {
+function VaultItem({ vault }: { vault: VaultWithAccess }) {
   const { vaultId } = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -54,7 +48,7 @@ function VaultItem({ vault }: { vault: Vault }) {
 
   const handleDelete = async () => {
     setIsLoading(true);
-    await deleteVault(vault.id);
+    await deleteVault({ vaultId: vault.id });
     queryClient.invalidateQueries({ queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY] });
     setIsLoading(false);
     if (vault.id === vaultId) {
@@ -69,26 +63,41 @@ function VaultItem({ vault }: { vault: Vault }) {
         isActive={vault.id === vaultId}
         onClick={() => router.push(`/app/${vault.id}`)}
       >
-        {vault.name}
+        <div className="flex w-full items-center justify-between">
+          <span>{vault.name}</span>
+          <div className="flex items-center gap-2">
+            {!vault.isOwner && (
+              <Badge variant="outline" className="px-1 text-xs">
+                {getRoleDisplayName(vault.role)}
+              </Badge>
+            )}
+            {vault.userCount > 1 && (
+              <UsersIcon className="text-muted-foreground size-3" />
+            )}
+          </div>
+        </div>
       </SidebarMenuButton>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuAction>
-            <MoreVerticalIcon />
-          </SidebarMenuAction>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start">
-          <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => setIsDeleteDialogOpen(true)}
-            variant="destructive"
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+
+      {vault.isOwner && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuAction>
+              <MoreVerticalIcon />
+            </SidebarMenuAction>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start">
+            <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setIsDeleteDialogOpen(true)}
+              variant="destructive"
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
 
       <VaultFormDialog
         vault={vault}
@@ -126,7 +135,11 @@ function VaultItem({ vault }: { vault: Vault }) {
   );
 }
 
-const SidebarVaultList = ({ vaults: initialVaults }: { vaults: VaultWithAccess[] }) => {
+const SidebarVaultList = ({
+  vaults: initialVaults,
+}: {
+  vaults: VaultWithAccess[];
+}) => {
   const { vaultId } = useParams();
   const router = useRouter();
   const { data: vaults, error } = useQuery({
@@ -221,7 +234,7 @@ const SidebarVaultList = ({ vaults: initialVaults }: { vaults: VaultWithAccess[]
       </SidebarGroup>
 
       {/* Shared Vaults */}
-      {vaults.some(vault => vault.isOwner === false) && (
+      {vaults && vaults.some(vault => vault.isOwner === false) && (
         <SidebarGroup>
           <SidebarGroupLabel>Shared With Me</SidebarGroupLabel>
           <SidebarGroupContent>

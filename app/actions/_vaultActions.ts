@@ -1,7 +1,7 @@
 "use server";
 
 import { AccessRole } from "@/generated/prisma";
-import { withAuth, withVaultAccess } from "@/lib/auth";
+import { withAuth, withVaultAccess, withVaultOwnership } from "@/lib/auth";
 import { AppError, ErrorCode, withErrorHandling } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import type { VaultWithAccess } from "@/types/vault";
@@ -65,6 +65,11 @@ export const getVaults = withErrorHandling(
               name: true,
               createdAt: true,
               updatedAt: true,
+              _count: {
+                select: {
+                  vaultAccess: true,
+                },
+              },
             },
           },
         },
@@ -81,6 +86,7 @@ export const getVaults = withErrorHandling(
         wrappedKey: access.wrappedKey,
         isOwner: access.role === AccessRole.OWNER,
         role: access.role,
+        userCount: access.vault._count.vaultAccess,
       }));
 
       return allVaults;
@@ -99,60 +105,64 @@ export const getVaults = withErrorHandling(
 
 export const getVault = withErrorHandling(
   withVaultAccess(async ({ vault, vaultAccess }): Promise<VaultWithAccess> => {
+    // Get the user count for this vault
+    const userCount = await prisma.vaultAccess.count({
+      where: {
+        vaultId: vault.id,
+      },
+    });
+
     return {
       ...vault,
       wrappedKey: vaultAccess.wrappedKey,
       isOwner: vaultAccess.role === AccessRole.OWNER,
       role: vaultAccess.role,
+      userCount,
     };
   })
 );
 
-export async function updateVault({ id, name }: { id: string; name: string }) {
-  const user = await currentUser();
-
-  if (!user) {
-    throw new AuthError("You are not signed in.");
-  }
-
-  try {
-    await prisma.vault.updateMany({
-      where: {
-        id,
-        userId: user.id,
-      },
-      data: {
-        name,
-      },
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      throw error;
+export const updateVault = withErrorHandling(
+  withVaultOwnership(async ({ vault }, { name }: { name: string }) => {
+    try {
+      await prisma.vault.updateMany({
+        where: {
+          id: vault.id,
+        },
+        data: {
+          name,
+        },
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Update vault error:", error);
+      throw new AppError(
+        "Failed to update vault. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
     }
-    console.error("Update vault error:", error);
-    throw new AuthError("Failed to update vault. Please try again later.");
-  }
-}
+  })
+);
 
-export async function deleteVault(id: string) {
-  const user = await currentUser();
-
-  if (!user) {
-    throw new AuthError("You are not signed in.");
-  }
-
-  try {
-    await prisma.vault.deleteMany({
-      where: {
-        id,
-        userId: user.id,
-      },
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      throw error;
+export const deleteVault = withErrorHandling(
+  withVaultOwnership(async ({ vault }) => {
+    try {
+      await prisma.vault.deleteMany({
+        where: {
+          id: vault.id,
+        },
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Delete vault error:", error);
+      throw new AppError(
+        "Failed to delete vault. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
     }
-    console.error("Delete vault error:", error);
-    throw new AuthError("Failed to delete vault. Please try again later.");
-  }
-}
+  })
+);
