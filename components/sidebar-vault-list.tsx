@@ -63,8 +63,8 @@ function VaultItem({ vault }: { vault: VaultWithAccess }) {
         isActive={vault.id === vaultId}
         onClick={() => router.push(`/app/${vault.id}`)}
       >
-        <div className="flex w-full items-center justify-between">
-          <span>{vault.name}</span>
+        <div className="flex w-full items-center justify-between gap-2">
+          <span className="truncate">{vault.name}</span>
           <div className="flex items-center gap-2">
             {!vault.isOwner && (
               <Badge variant="outline" className="px-1 text-xs">

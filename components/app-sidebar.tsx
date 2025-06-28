@@ -43,7 +43,14 @@ export async function AppSidebar({
             imageUrl={user.imageUrl || ""}
             initials={(user.firstName || "")[0] + (user.lastName || "")[0]}
           />
-          <SidebarAddVaultButton />
+          <VaultFormDialog
+            trigger={
+              <Button variant="outline" size="sm" className="w-full">
+                <Plus className="mr-2 h-4 w-4" />
+                New Vault
+              </Button>
+            }
+          />
         </SidebarHeader>
         <SidebarContent>
           <div className="text-muted-foreground p-4 text-center text-sm">
