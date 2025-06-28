@@ -6,34 +6,55 @@ import { AppError, ErrorCode, withErrorHandling } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { isValidUUID } from "@/lib/uuid";
 
+export const findUserForSharing = withErrorHandling(
+  withAuth(async (_, { email }: { email: string }) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          publicKey: true,
+        },
+      });
+
+      if (!user) {
+        throw new AppError(
+          "User not found with that email address.",
+          ErrorCode.NOT_FOUND
+        );
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Find user for sharing error:", error);
+      throw new AppError(
+        "Failed to find user. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
+    }
+  })
+);
+
 export const shareVault = withErrorHandling(
   withVaultOwnership(
     async (
       { user, vault },
       {
-        targetUserEmail,
+        targetUserId,
         role,
         wrappedKey,
       }: {
-        targetUserEmail: string;
+        targetUserId: string;
         role: AccessRole;
         wrappedKey: string;
       }
     ) => {
       try {
-        // Find the target user by email
-        const targetUser = await prisma.user.findUnique({
-          where: { email: targetUserEmail },
-        });
-
-        if (!targetUser) {
-          throw new AppError(
-            "User not found with that email address.",
-            ErrorCode.NOT_FOUND
-          );
-        }
-
-        if (targetUser.id === user.id) {
+        if (targetUserId === user.id) {
           throw new AppError(
             "You cannot share a vault with yourself.",
             ErrorCode.VALIDATION_ERROR
@@ -45,7 +66,7 @@ export const shareVault = withErrorHandling(
           where: {
             vaultId_userId: {
               vaultId: vault.id,
-              userId: targetUser.id,
+              userId: targetUserId,
             },
           },
         });
@@ -57,11 +78,11 @@ export const shareVault = withErrorHandling(
           );
         }
 
-        // Create vault access record
+        // Create vault access record with the wrapped key
         await prisma.vaultAccess.create({
           data: {
             vaultId: vault.id,
-            userId: targetUser.id,
+            userId: targetUserId,
             role,
             wrappedKey,
           },
@@ -212,45 +233,6 @@ export const getVaultSharedUsers = withErrorHandling(
       console.error("Get vault shared users error:", error);
       throw new AppError(
         "Failed to get shared users. Please try again later.",
-        ErrorCode.DATABASE_ERROR
-      );
-    }
-  })
-);
-
-export const searchUsers = withErrorHandling(
-  withAuth(async ({ user }, { email }: { email: string }) => {
-    try {
-      if (!email || email.length < 3) {
-        return [];
-      }
-
-      const users = await prisma.user.findMany({
-        where: {
-          email: {
-            contains: email,
-            mode: "insensitive",
-          },
-          id: {
-            not: user.id, // Exclude current user
-          },
-        },
-        select: {
-          id: true,
-          email: true,
-          publicKey: true,
-        },
-        take: 10,
-      });
-
-      return users;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      console.error("Search users error:", error);
-      throw new AppError(
-        "Failed to search users. Please try again later.",
         ErrorCode.DATABASE_ERROR
       );
     }
