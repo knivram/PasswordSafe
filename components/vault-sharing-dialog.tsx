@@ -70,27 +70,33 @@ export function VaultSharingDialog({
       role: AccessRole;
     }) => {
       // First find the user and get their public key
-      const targetUserResponse = await findUserForSharing({ email: params.targetUserEmail });
-      
+      const targetUserResponse = await findUserForSharing({
+        email: params.targetUserEmail,
+      });
+
       if (!targetUserResponse.success) {
-        throw new Error(targetUserResponse.error?.message || "Failed to find user");
+        throw new Error(
+          targetUserResponse.error?.message || "Failed to find user"
+        );
       }
-      
+
       const targetUser = targetUserResponse.data;
-      
+
       if (!privateKey || !isInitialized) {
         throw new Error("Private key not available");
       }
-      
+
       // Rewrap the vault key for the target user
       const crypto = new CryptoService();
-      const targetUserPublicKey = await crypto.importPublicKeyFromBase64(targetUser.publicKey);
+      const targetUserPublicKey = await crypto.importPublicKeyFromBase64(
+        targetUser.publicKey
+      );
       const newWrappedKey = await crypto.rewrapVaultKeyForUser({
         wrappedKey,
         ownerPrivateKey: privateKey,
         targetUserPublicKey,
       });
-      
+
       // Share the vault with the properly wrapped key
       return shareVault({
         vaultId: params.vaultId,
