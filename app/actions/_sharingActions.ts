@@ -4,7 +4,6 @@ import type { AccessRole } from "@/generated/prisma";
 import { withAuth, withVaultOwnership } from "@/lib/auth";
 import { AppError, ErrorCode, withErrorHandling } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { isValidUUID } from "@/lib/uuid";
 
 export const findUserForSharing = withErrorHandling(
   withAuth(async (_, { email }: { email: string }) => {
@@ -107,10 +106,6 @@ export const revokeVaultAccess = withErrorHandling(
   withVaultOwnership(
     async ({ vault }, { targetUserId }: { targetUserId: string }) => {
       try {
-        if (!isValidUUID(targetUserId)) {
-          throw new AppError("Invalid user ID format.", ErrorCode.INVALID_UUID);
-        }
-
         const deletedAccess = await prisma.vaultAccess.deleteMany({
           where: {
             vaultId: vault.id,

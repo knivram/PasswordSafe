@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/_sharingActions";
 import type { AccessRole } from "@/generated/prisma";
 import { SHAREABLE_ROLES } from "@/lib/prisma";
+import { handleActionResponse } from "@/lib/query-utils";
 import { cn, getRoleDisplayName } from "@/lib/utils";
 import { Button } from "./ui/button";
 import {
@@ -26,16 +27,14 @@ export function SharedUsersList({ vaultId }: { vaultId: string }) {
     queryKey: ["vault-shared-users", vaultId],
     queryFn: async () => {
       const response = await getVaultSharedUsers({ vaultId });
-      if (response.success) {
-        return response.data;
-      }
-      throw new Error(response.error?.message || "Failed to load shared users");
+      return handleActionResponse(response);
     },
   });
 
   const revokeAccessMutation = useMutation({
     mutationFn: async (params: { vaultId: string; targetUserId: string }) => {
-      return revokeVaultAccess(params);
+      const response = await revokeVaultAccess(params);
+      return handleActionResponse(response);
     },
     onSuccess: (_, variables) => {
       const user = sharedUsers.find(u => u.userId === variables.targetUserId);
@@ -56,18 +55,15 @@ export function SharedUsersList({ vaultId }: { vaultId: string }) {
       targetUserId: string;
       role: AccessRole;
     }) => {
-      return updateVaultAccess(params);
+      const response = await updateVaultAccess(params);
+      return handleActionResponse(response);
     },
-    onSuccess: (response, variables) => {
-      if (response.success) {
-        const user = sharedUsers.find(u => u.userId === variables.targetUserId);
-        toast.success(`Role updated for ${user?.email || "user"}`);
-        queryClient.invalidateQueries({
-          queryKey: ["vault-shared-users", vaultId],
-        });
-      } else {
-        throw new Error(response.error?.message || "Failed to update role");
-      }
+    onSuccess: (_, variables) => {
+      const user = sharedUsers.find(u => u.userId === variables.targetUserId);
+      toast.success(`Role updated for ${user?.email || "user"}`);
+      queryClient.invalidateQueries({
+        queryKey: ["vault-shared-users", vaultId],
+      });
     },
     onError: error => {
       console.error("Failed to update role:", error);
