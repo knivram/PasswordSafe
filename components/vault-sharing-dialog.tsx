@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, ChevronDownIcon, ShareIcon, UserIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, ShareIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { searchUsers, shareVault } from "@/app/actions/_sharingActions";
+import { findUserForSharing, shareVault } from "@/app/actions/_sharingActions";
 import { useKeyStore } from "@/context/KeyStore";
 import type { AccessRole } from "@/generated/prisma";
 import { CryptoService } from "@/lib/crypto";
@@ -40,12 +40,6 @@ interface VaultSharingDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-interface UserSearchResult {
-  id: string;
-  email: string;
-  publicKey: string;
-}
-
 const FORM_ID = "vault-sharing-form";
 
 export function VaultSharingDialog({
@@ -56,12 +50,10 @@ export function VaultSharingDialog({
   isOpen,
   onOpenChange,
 }: VaultSharingDialogProps) {
-  const cryptoService = new CryptoService();
   const { privateKey, isInitialized } = useKeyStore();
   const queryClient = useQueryClient();
 
   const [_isOpen, _setIsOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
 
   // Form fields
   const [email, setEmail] = useState("");
@@ -76,9 +68,36 @@ export function VaultSharingDialog({
       vaultId: string;
       targetUserEmail: string;
       role: AccessRole;
-      wrappedKey: string;
     }) => {
-      return shareVault(params);
+      // First find the user and get their public key
+      const targetUserResponse = await findUserForSharing({ email: params.targetUserEmail });
+      
+      if (!targetUserResponse.success) {
+        throw new Error(targetUserResponse.error?.message || "Failed to find user");
+      }
+      
+      const targetUser = targetUserResponse.data;
+      
+      if (!privateKey || !isInitialized) {
+        throw new Error("Private key not available");
+      }
+      
+      // Rewrap the vault key for the target user
+      const crypto = new CryptoService();
+      const targetUserPublicKey = await crypto.importPublicKeyFromBase64(targetUser.publicKey);
+      const newWrappedKey = await crypto.rewrapVaultKeyForUser({
+        wrappedKey,
+        ownerPrivateKey: privateKey,
+        targetUserPublicKey,
+      });
+      
+      // Share the vault with the properly wrapped key
+      return shareVault({
+        vaultId: params.vaultId,
+        targetUserId: targetUser.id,
+        role: params.role,
+        wrappedKey: newWrappedKey,
+      });
     },
     onSuccess: (_, variables) => {
       toast.success(`Vault shared with ${variables.targetUserEmail}`);
@@ -90,24 +109,6 @@ export function VaultSharingDialog({
     onError: error => {
       console.error("Failed to share vault:", error);
       toast.error("Failed to share vault");
-    },
-  });
-
-  const searchUsersMutation = useMutation({
-    mutationFn: async (params: { email: string }) => {
-      return searchUsers(params);
-    },
-    onSuccess: response => {
-      if (response.success) {
-        setSearchResults(response.data);
-      } else {
-        throw new Error(response.error?.message || "Failed to search users");
-      }
-    },
-    onError: error => {
-      console.error("Failed to search users:", error);
-      toast.error("Failed to search users");
-      setSearchResults([]);
     },
   });
 
@@ -125,21 +126,6 @@ export function VaultSharingDialog({
   const resetForm = () => {
     setEmail("");
     setSelectedRole("VIEWER");
-    setSearchResults([]);
-  };
-
-  const handleSearch = (query: string) => {
-    if (query.length < 3) {
-      setSearchResults([]);
-      return;
-    }
-
-    searchUsersMutation.mutate({ email: query });
-  };
-
-  const selectUser = (user: UserSearchResult) => {
-    setEmail(user.email);
-    setSearchResults([]);
   };
 
   const handleShare = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -150,43 +136,10 @@ export function VaultSharingDialog({
     }
 
     try {
-      // Find the target user
-      let targetUser = searchResults.find(
-        (u: UserSearchResult) => u.email === email
-      );
-
-      if (!targetUser) {
-        // Search for the user
-        const response = await searchUsers({ email });
-        if (!response.success) {
-          toast.error("Failed to search for user");
-          return;
-        }
-        const foundUser = response.data.find(
-          (u: UserSearchResult) => u.email === email
-        );
-        if (!foundUser) {
-          toast.error("User not found with that email address");
-          return;
-        }
-        targetUser = foundUser;
-      }
-
-      // Re-encrypt vault key for target user
-      const targetPublicKey = await cryptoService.importPublicKeyFromBase64(
-        targetUser.publicKey
-      );
-      const newWrappedKey = await cryptoService.rewrapVaultKeyForUser({
-        wrappedKey,
-        ownerPrivateKey: privateKey,
-        targetUserPublicKey: targetPublicKey,
-      });
-
       shareVaultMutation.mutate({
         vaultId,
         targetUserEmail: email,
         role: selectedRole,
-        wrappedKey: newWrappedKey,
       });
     } catch (error) {
       console.error("Failed to share vault:", error);
@@ -221,34 +174,10 @@ export function VaultSharingDialog({
                     id="email"
                     type="email"
                     value={email}
-                    onChange={e => {
-                      setEmail(e.target.value);
-                      handleSearch(e.target.value);
-                    }}
+                    onChange={e => setEmail(e.target.value)}
                     placeholder="user@example.com"
                     required
                   />
-                  {/* Search Results Dropdown */}
-                  {searchResults.length > 0 && (
-                    <div className="absolute top-full right-0 left-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-md border bg-white shadow-lg">
-                      {searchResults.map(user => (
-                        <button
-                          key={user.id}
-                          type="button"
-                          className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-50"
-                          onClick={() => selectUser(user)}
-                        >
-                          <UserIcon className="size-4 text-gray-400" />
-                          <span>{user.email}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {searchUsersMutation.isPending && (
-                    <div className="absolute top-full right-0 left-0 z-10 mt-1 rounded-md border bg-white p-3 shadow-lg">
-                      <div className="text-sm text-gray-500">Searching...</div>
-                    </div>
-                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="role">Role</Label>
