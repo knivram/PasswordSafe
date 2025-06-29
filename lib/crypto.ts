@@ -119,13 +119,11 @@ export class CryptoService {
     ownerPrivateKey: CryptoKey;
     targetUserPublicKey: CryptoKey;
   }): Promise<string> {
-    // First unwrap the vault key with the owner's private key
     const vaultKey = await this.unwrapVaultKey({
       wrappedKey,
       privateKey: ownerPrivateKey,
     });
 
-    // Then wrap it with the target user's public key
     const newWrappedKey = await this.wrapAESKey(vaultKey, targetUserPublicKey);
     return BufferTransformer.arrayBufferToBase64(newWrappedKey);
   }
@@ -232,25 +230,18 @@ export class CryptoService {
     password: string,
     saltArr: Uint8Array
   ): Promise<CryptoKey> {
-    // 2. Split IV and ciphertext+tag
     const { iv, data } = this.unpack(wrappedPriv);
 
-    // 3. Derive the KEK same as in registration
     const kek = await this.deriveKek(password, saltArr);
 
-    // 4. Unwrap the RSA private key (pkcs8) under the KEK
     const privateKey = await crypto.subtle.unwrapKey(
-      "pkcs8", // format of the wrapped key
-      data, // ciphertext+tag
-      kek, // the AES-GCM key
-      { name: "AES-GCM", iv }, // algorithm & IV
-      {
-        // resulting key algorithm & usage
-        name: "RSA-OAEP",
-        hash: "SHA-256",
-      },
-      true, // extractable? you need it for wrapping vault keys
-      ["decrypt", "unwrapKey"] // what you want to do with the unwrapped key
+      "pkcs8",
+      data,
+      kek,
+      { name: "AES-GCM", iv },
+      { name: "RSA-OAEP", hash: "SHA-256" },
+      true,
+      ["decrypt", "unwrapKey"]
     );
 
     return privateKey;
