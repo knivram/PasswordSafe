@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreVerticalIcon, UsersIcon } from "lucide-react";
+import { List, MoreVerticalIcon, UsersIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { deleteVault, getVaults } from "@/app/actions/_vaultActions";
 import { handleActionResponse, getErrorInfo } from "@/lib/query-utils";
 import { getRoleDisplayName } from "@/lib/utils";
@@ -151,6 +151,14 @@ const SidebarVaultList = ({
     placeholderData: initialVaults,
   });
 
+  const ownedVaults = useMemo(() => {
+    return vaults?.filter(vault => vault.isOwner);
+  }, [vaults]);
+
+  const sharedVaults = useMemo(() => {
+    return vaults?.filter(vault => !vault.isOwner);
+  }, [vaults]);
+
   // Handle query errors
   if (error) {
     const errorInfo = getErrorInfo(error);
@@ -169,15 +177,10 @@ const SidebarVaultList = ({
                   isActive={vaultId === undefined}
                   onClick={() => router.push(`/app`)}
                 >
-                  All Vaults
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem key="favorites">
-                <SidebarMenuButton
-                  isActive={vaultId === "favorites"}
-                  onClick={() => router.push(`/app/favorites`)}
-                >
-                  Favorites
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <span>All Secrets</span>
+                    <List className="size-4" />
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -205,15 +208,10 @@ const SidebarVaultList = ({
                 isActive={vaultId === undefined}
                 onClick={() => router.push(`/app`)}
               >
-                All Vaults
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem key="favorites">
-              <SidebarMenuButton
-                isActive={vaultId === "favorites"}
-                onClick={() => router.push(`/app/favorites`)}
-              >
-                Favorites
+                <div className="flex w-full items-center justify-between gap-2">
+                  <span>All Secrets</span>
+                  <List className="size-4" />
+                </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -223,18 +221,25 @@ const SidebarVaultList = ({
       <SidebarGroup>
         <SidebarGroupLabel>My Vaults</SidebarGroupLabel>
         <SidebarGroupContent>
-          <SidebarMenu>
-            {(vaults || [])
-              .filter(vault => vault.isOwner !== false)
-              .map(vault => (
+          {!ownedVaults || ownedVaults.length === 0 ? (
+            <div className="text-muted-foreground p-4 text-center text-sm">
+              <p className="font-medium">No vaults yet</p>
+              <p className="mt-1 text-xs">
+                Create your first vault to start storing secrets securely
+              </p>
+            </div>
+          ) : (
+            <SidebarMenu>
+              {ownedVaults.map(vault => (
                 <VaultItem key={vault.id} vault={vault} />
               ))}
-          </SidebarMenu>
+            </SidebarMenu>
+          )}
         </SidebarGroupContent>
       </SidebarGroup>
 
       {/* Shared Vaults */}
-      {vaults && vaults.some(vault => vault.isOwner === false) && (
+      {sharedVaults && sharedVaults.length > 0 && (
         <SidebarGroup>
           <SidebarGroupLabel>Shared With Me</SidebarGroupLabel>
           <SidebarGroupContent>

@@ -1,18 +1,15 @@
 "use client";
 
-import { useKeyStore } from "@/context/KeyStore";
+import { AllSecretsList } from "@/components/secrets-list";
 
 export default function Page() {
-  const { isInitialized, privateKey, publicKey } = useKeyStore();
-
-  if (!isInitialized) {
-    return <p>Loading...</p>;
-  }
-
   return (
-    <div>
-      <p>Private Key: {JSON.stringify(privateKey.algorithm)}</p>
-      <p>Public Key: {JSON.stringify(publicKey.algorithm)}</p>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">All Secrets</h1>
+      </div>
+
+      <AllSecretsList />
     </div>
   );
 }

@@ -25,3 +25,11 @@ export interface SecretWithDecryptedData {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface SecretWithDecryptedDataAndVault
+  extends SecretWithDecryptedData {
+  vault: {
+    id: string;
+    name: string;
+  };
+}
