@@ -3,6 +3,7 @@
 import {
   createSecret,
   getSecrets,
+  getSecretsByVaults,
   getSecret,
   updateSecret,
   deleteSecret,
@@ -30,6 +31,7 @@ export class SecretsClient {
     publicKey: CryptoKey
   ): Promise<Secret> {
     try {
+      // Only encrypt the secret data, not the metadata
       const dataString = JSON.stringify(input.data);
       const encryptedData = await this.cryptoService.encryptSecret({
         secret: dataString,
@@ -40,6 +42,7 @@ export class SecretsClient {
         vaultId: input.vaultId,
         title: input.title,
         encryptedData,
+        isFavorite: input.isFavorite ?? false,
       });
 
       return handleActionResponse(response);
@@ -75,7 +78,6 @@ export class SecretsClient {
   ): Promise<SecretWithDecryptedData[]> {
     try {
       const encryptedSecrets = await this.getSecrets(vaultId);
-
       const decryptedSecrets: SecretWithDecryptedData[] = [];
 
       for (const secret of encryptedSecrets) {
@@ -94,6 +96,7 @@ export class SecretsClient {
             data,
             createdAt: secret.createdAt,
             updatedAt: secret.updatedAt,
+            isFavorite: secret.isFavorite ?? false,
           });
         } catch (decryptError) {
           console.error(`Failed to decrypt secret ${secret.id}:`, decryptError);
@@ -135,6 +138,7 @@ export class SecretsClient {
         data,
         createdAt: encryptedSecret.createdAt,
         updatedAt: encryptedSecret.updatedAt,
+        isFavorite: encryptedSecret.isFavorite ?? false,
       };
     } catch (error) {
       console.error("Failed to get secret with decrypted data:", error);
@@ -150,14 +154,19 @@ export class SecretsClient {
     publicKey: CryptoKey
   ): Promise<Secret> {
     const serverUpdates: UpdateSecretServerInput = {};
+
+    // Handle unencrypted fields
     if (updatedSecret.title) {
       serverUpdates.title = updatedSecret.title;
     }
+    if (typeof updatedSecret.isFavorite === "boolean") {
+      serverUpdates.isFavorite = updatedSecret.isFavorite;
+    }
 
     try {
+      // Only encrypt the secret data if it's being updated
       if (updatedSecret.data) {
         const dataString = JSON.stringify(updatedSecret.data);
-        // Encrypt the new data
         const encryptedData = await this.cryptoService.encryptSecret({
           secret: dataString,
           publicKey,
@@ -180,5 +189,34 @@ export class SecretsClient {
   async deleteSecret(secretId: string): Promise<void> {
     const response = await deleteSecret({ secretId });
     handleActionResponse(response);
+  }
+
+  async getFavoriteSecrets(
+    privateKey: CryptoKey
+  ): Promise<SecretWithDecryptedData[]> {
+    try {
+      const response = await getSecretsByVaults();
+      const secrets = handleActionResponse(response);
+
+      // Decrypt each secret's data
+      const decryptedSecrets = await Promise.all(
+        secrets.map(async secret => {
+          const decryptedData = await this.cryptoService.decryptSecret({
+            encryptedSecret: secret.encryptedData,
+            privateKey,
+          });
+
+          return {
+            ...secret,
+            data: JSON.parse(decryptedData) as SecretData,
+          };
+        })
+      );
+
+      return decryptedSecrets;
+    } catch (error) {
+      console.error("Failed to get favorite secrets:", error);
+      throw new Error("Failed to get favorite secrets. Please try again.");
+    }
   }
 }

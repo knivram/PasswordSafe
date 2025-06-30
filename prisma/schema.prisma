@@ -41,6 +41,7 @@ model Secret {
   encryptedData String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  isFavorite    Boolean  @default(false)
   vault         Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
 
   @@index([vaultId])

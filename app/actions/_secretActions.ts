@@ -1,7 +1,7 @@
 "use server";
 
 import type { Secret } from "@/generated/prisma";
-import { withVaultAccess, withSecretAccess } from "@/lib/auth";
+import { withVaultAccess, withSecretAccess, withAuth } from "@/lib/auth";
 import { AppError, ErrorCode, withErrorHandling } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 
@@ -9,9 +9,9 @@ export const createSecret = withErrorHandling(
   withVaultAccess(
     async (
       ctx,
-      input: { title: string; encryptedData: string }
+      input: { title: string; encryptedData: string; isFavorite?: boolean }
     ): Promise<Secret> => {
-      const { title, encryptedData } = input;
+      const { title, encryptedData, isFavorite } = input;
 
       try {
         // Create the secret with pre-encrypted data
@@ -20,6 +20,7 @@ export const createSecret = withErrorHandling(
             vaultId: ctx.vault.id,
             title,
             encryptedData,
+            isFavorite: isFavorite ?? false,
           },
         });
 
@@ -74,6 +75,7 @@ export const getSecret = withErrorHandling(
 export interface UpdateSecretServerInput {
   title?: string;
   encryptedData?: string;
+  isFavorite?: boolean;
 }
 
 export const updateSecret = withErrorHandling(
@@ -121,6 +123,36 @@ export const deleteSecret = withErrorHandling(
       console.error("Delete secret error:", error);
       throw new AppError(
         "Failed to delete secret. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
+    }
+  })
+);
+
+export const getSecretsByVaults = withErrorHandling(
+  withAuth(async ({ user }): Promise<Secret[]> => {
+    try {
+      // Get all favorite secrets across all vaults the user has access to
+      const secrets = await prisma.secret.findMany({
+        where: {
+          vault: {
+            userId: user.id,
+          },
+          isFavorite: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return secrets;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Get secrets error:", error);
+      throw new AppError(
+        "Failed to get secrets. Please try again later.",
         ErrorCode.DATABASE_ERROR
       );
     }

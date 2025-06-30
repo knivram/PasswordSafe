@@ -8,6 +8,7 @@ import { SecretsClient } from "@/lib/secrets-client";
 import { ensureFullUrl } from "@/lib/utils";
 import type { SecretData, SecretWithDecryptedData } from "@/types/secret";
 import { SECRETS_LIST_QUERY_KEY } from "./secrets-list";
+import { Star, StarOff } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -52,6 +53,7 @@ export function SecretFormDialog({
   const [password, setPassword] = useState("");
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // Initialize form with secret data when editing
   useEffect(() => {
@@ -61,6 +63,7 @@ export function SecretFormDialog({
       setPassword(secret.data.password || "");
       setUrl(secret.data.url || "");
       setNotes(secret.data.notes || "");
+      setIsFavorite(secret.isFavorite || false);
     }
   }, [secret]);
 
@@ -71,6 +74,7 @@ export function SecretFormDialog({
       setPassword("");
       setUrl("");
       setNotes("");
+      setIsFavorite(false);
     }
   };
 
@@ -107,6 +111,7 @@ export function SecretFormDialog({
           {
             title,
             data: secretData,
+            isFavorite,
           },
           publicKey
         );
@@ -116,6 +121,7 @@ export function SecretFormDialog({
             vaultId,
             title,
             data: secretData,
+            isFavorite,
           },
           publicKey
         );
@@ -144,14 +150,34 @@ export function SecretFormDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Secret" : "Add New Secret"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update the secret information. All changes will be encrypted."
-              : "Add a new secret to this vault. All information will be encrypted."}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle>
+                {isEditing ? "Edit Secret" : "Add New Secret"}
+              </DialogTitle>
+              <DialogDescription>
+                {isEditing
+                  ? "Update the secret information. All changes will be encrypted."
+                  : "Add a new secret to this vault. All information will be encrypted."}
+              </DialogDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              disabled={isLoading}
+              aria-label={
+                isFavorite ? "Unmark as favorite" : "Mark as favorite"
+              }
+              onClick={() => setIsFavorite(!isFavorite)}
+            >
+              {isFavorite ? (
+                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+              ) : (
+                <StarOff className="text-muted-foreground h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </DialogHeader>
         <form id={SECRET_FORM_ID} onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">

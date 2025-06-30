@@ -1,7 +1,16 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Eye, EyeOff, MoreHorizontal, Edit, Trash } from "lucide-react";
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  Edit,
+  Trash,
+  Star,
+  StarOff,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useKeyStore } from "@/context/KeyStore";
@@ -39,13 +48,14 @@ function SecretsList({ vaultId }: SecretsListProps) {
   const { data: secrets, isLoading: isLoadingSecrets } = useQuery({
     queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
     queryFn: async () => {
-      if (privateKey) {
-        return await secretsClient.getSecretsWithDecryptedData(
-          vaultId,
-          privateKey
-        );
+      if (!privateKey) return [];
+      if (vaultId === "favorites") {
+        return await secretsClient.getFavoriteSecrets(privateKey);
       }
-      return [];
+      return await secretsClient.getSecretsWithDecryptedData(
+        vaultId,
+        privateKey
+      );
     },
     enabled: !!privateKey,
   });
@@ -68,6 +78,37 @@ function SecretsList({ vaultId }: SecretsListProps) {
       toast.success("Copied to clipboard");
     } catch (error) {
       console.error("Failed to copy to clipboard:", error);
+    }
+  };
+
+  // Sort secrets: favorites first, then by createdAt desc
+  const sortedSecrets = (secrets || [])
+    .slice()
+    .sort((a: SecretWithDecryptedData, b: SecretWithDecryptedData) => {
+      if (a.isFavorite === b.isFavorite) {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+      return a.isFavorite ? -1 : 1;
+    });
+
+  const handleToggleFavorite = async (secret: SecretWithDecryptedData) => {
+    try {
+      await secretsClient.updateSecret(
+        secret.id,
+        { isFavorite: !secret.isFavorite },
+        privateKey!
+      );
+      await queryClient.invalidateQueries({
+        queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
+      });
+      toast.success(
+        `Secret marked as ${!secret.isFavorite ? "favorite" : "not favorite"}`
+      );
+    } catch (error) {
+      console.error("Failed to update favorite status:", error);
+      toast.error("Failed to update favorite status. Please try again later.");
     }
   };
 
@@ -137,11 +178,29 @@ function SecretsList({ vaultId }: SecretsListProps) {
           }
         }}
       />
-      {secrets.map(secret => (
+      {sortedSecrets.map(secret => (
         <Card className="gap-2" key={secret.id}>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{secret.title}</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">{secret.title}</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={
+                    secret.isFavorite
+                      ? "Unmark as favorite"
+                      : "Mark as favorite"
+                  }
+                  onClick={() => handleToggleFavorite(secret)}
+                >
+                  {secret.isFavorite ? (
+                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                  ) : (
+                    <StarOff className="text-muted-foreground h-5 w-5" />
+                  )}
+                </Button>
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm">

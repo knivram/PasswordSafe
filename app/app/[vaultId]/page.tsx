@@ -11,6 +11,19 @@ export default async function VaultPage({
   params: Promise<{ vaultId: string }>;
 }) {
   const vaultId = (await params).vaultId;
+
+  // Handle special routes
+  if (vaultId === "favorites") {
+    return (
+      <div className="p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Favorite Secrets</h1>
+        </div>
+        <SecretsList vaultId="favorites" />
+      </div>
+    );
+  }
+
   const response = await getVault({ vaultId });
 
   // Handle error responses
