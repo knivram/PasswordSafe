@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { Star, StarOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useKeyStore } from "@/context/KeyStore";
@@ -8,7 +9,6 @@ import { SecretsClient } from "@/lib/secrets-client";
 import { ensureFullUrl } from "@/lib/utils";
 import type { SecretData, SecretWithDecryptedData } from "@/types/secret";
 import { SECRETS_LIST_QUERY_KEY } from "./secrets-list";
-import { Star, StarOff } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,

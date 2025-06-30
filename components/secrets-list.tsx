@@ -48,7 +48,9 @@ function SecretsList({ vaultId }: SecretsListProps) {
   const { data: secrets, isLoading: isLoadingSecrets } = useQuery({
     queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
     queryFn: async () => {
-      if (!privateKey) return [];
+      if (!privateKey) {
+        return [];
+      }
       if (vaultId === "favorites") {
         return await secretsClient.getFavoriteSecrets(privateKey);
       }
@@ -95,10 +97,14 @@ function SecretsList({ vaultId }: SecretsListProps) {
 
   const handleToggleFavorite = async (secret: SecretWithDecryptedData) => {
     try {
+      if (!privateKey) {
+        toast.error("No private key available. Please try again.");
+        return;
+      }
       await secretsClient.updateSecret(
         secret.id,
         { isFavorite: !secret.isFavorite },
-        privateKey!
+        privateKey
       );
       await queryClient.invalidateQueries({
         queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
