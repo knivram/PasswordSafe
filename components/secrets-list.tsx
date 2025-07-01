@@ -11,6 +11,7 @@ import type {
   SecretWithDecryptedData,
   SecretWithDecryptedDataAndVault,
 } from "@/types/secret";
+import type { VaultWithAccess } from "@/types/vault";
 import { SecretFormDialog } from "./secret-form-dialog";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -28,10 +29,7 @@ const ALL_SECRETS_QUERY_KEY = "all-secrets-list";
 
 interface SecretsListProps {
   vaultId: string;
-  vault?: {
-    isOwner?: boolean;
-    role?: string;
-  };
+  vault: VaultWithAccess;
 }
 
 type SecretWithOptionalVault =
@@ -374,7 +372,7 @@ function SecretsList({ vaultId, vault }: SecretsListProps) {
     <SecretsListBase
       queryKey={[SECRETS_LIST_QUERY_KEY, vaultId]}
       queryFn={privateKey =>
-        secretsClient.getSecretsWithDecryptedData(vaultId, privateKey)
+        secretsClient.getSecretsWithDecryptedData(vault, privateKey)
       }
       emptyStateMessage={{
         primary: "No secrets in this vault yet.",

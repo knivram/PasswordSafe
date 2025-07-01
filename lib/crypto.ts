@@ -57,36 +57,41 @@ export class CryptoService {
 
   public async encryptSecret({
     secret,
-    publicKey,
+    vaultKey,
   }: {
     secret: string;
-    publicKey: CryptoKey;
+    vaultKey: CryptoKey;
   }): Promise<string> {
     const data = new TextEncoder().encode(secret);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
     const encrypted = await crypto.subtle.encrypt(
       {
-        name: "RSA-OAEP",
+        name: "AES-GCM",
+        iv,
       },
-      publicKey,
+      vaultKey,
       data
     );
-    return BufferTransformer.arrayBufferToBase64(encrypted);
+    const packed = this.pack(iv, encrypted);
+    return BufferTransformer.arrayBufferToBase64(packed);
   }
 
   public async decryptSecret({
     encryptedSecret,
-    privateKey,
+    vaultKey,
   }: {
     encryptedSecret: string;
-    privateKey: CryptoKey;
+    vaultKey: CryptoKey;
   }): Promise<string> {
     const data = BufferTransformer.base64ToArrayBuffer(encryptedSecret);
+    const { iv, data: encryptedData } = this.unpack(data);
     const decrypted = await crypto.subtle.decrypt(
       {
-        name: "RSA-OAEP",
+        name: "AES-GCM",
+        iv,
       },
-      privateKey,
-      data
+      vaultKey,
+      encryptedData
     );
     return new TextDecoder().decode(decrypted);
   }
