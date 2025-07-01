@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Eye, EyeOff, MoreHorizontal, Edit, Trash } from "lucide-react";
+import { Copy, Eye, EyeOff, MoreHorizontal, Edit, Trash, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ import { Skeleton } from "./ui/skeleton";
 
 const SECRETS_LIST_QUERY_KEY = "secrets-list";
 const ALL_SECRETS_QUERY_KEY = "all-secrets-list";
+const FAVORITE_SECRETS_QUERY_KEY = "favorite-secrets-list";
 
 interface SecretsListProps {
   vaultId: string;
@@ -136,10 +137,106 @@ function SecretsListBase({
         });
       }
 
+      // Always invalidate favorites query when deleting
+      await queryClient.invalidateQueries({
+        queryKey: [FAVORITE_SECRETS_QUERY_KEY],
+      });
+
       toast.success("Secret deleted");
     } catch (error) {
       console.error("Failed to delete secret:", error);
       toast.error("Failed to delete secret. Please try again.");
+    }
+  };
+  const handleToggleFavorite = async (secret: SecretWithOptionalVault) => {
+    const originalFavoriteState = secret.isFavorite;
+    const newFavoriteState = !originalFavoriteState;
+
+    // Optimistic update function
+    const updateSecretInQueries = (isFavorite: boolean) => {
+      // Update current query
+      queryClient.setQueryData(queryKey, (oldData: SecretWithOptionalVault[] | undefined) => {
+        if (!oldData) return [];
+        return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite } : s));
+      });
+
+      // Update all related queries optimistically
+      if (showVaultBadges) {
+        // Update all-secrets query
+        queryClient.setQueryData([ALL_SECRETS_QUERY_KEY], (oldData: SecretWithOptionalVault[] | undefined) => {
+          if (!oldData) return [];
+          return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite } : s));
+        });
+
+        // Update specific vault query
+        queryClient.setQueryData([SECRETS_LIST_QUERY_KEY, secret.vaultId], (oldData: SecretWithOptionalVault[] | undefined) => {
+          if (!oldData) return [];
+          return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite } : s));
+        });
+      } else {
+        // Update all-secrets query
+        queryClient.setQueryData([ALL_SECRETS_QUERY_KEY], (oldData: SecretWithOptionalVault[] | undefined) => {
+          if (!oldData) return [];
+          return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite } : s));
+        });
+      }
+
+      // Update favorites query
+      queryClient.setQueryData([FAVORITE_SECRETS_QUERY_KEY], (oldData: SecretWithOptionalVault[] | undefined) => {
+        if (!oldData) return [];
+        if (isFavorite) {
+          // Add to favorites if not already there
+          const exists = oldData.some(s => s.id === secret.id);
+          if (!exists) {
+            return [...oldData, { ...secret, isFavorite: true }];
+          }
+          return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite: true } : s));
+        } else {
+          // Remove from favorites
+          return oldData.filter(s => s.id !== secret.id);
+        }
+      });
+    };
+
+    // Apply optimistic update immediately
+    updateSecretInQueries(newFavoriteState);
+
+    // Show immediate feedback
+    toast.success(newFavoriteState ? "Added to favorites" : "Removed from favorites");
+
+    try {
+      // Perform server update
+      await secretsClient.toggleFavorite(secret.id);
+
+      // Server update successful, invalidate queries to ensure consistency
+      if (showVaultBadges) {
+        await queryClient.invalidateQueries({
+          queryKey: [ALL_SECRETS_QUERY_KEY],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [SECRETS_LIST_QUERY_KEY, secret.vaultId],
+        });
+      } else {
+        await queryClient.invalidateQueries({
+          queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [ALL_SECRETS_QUERY_KEY],
+        });
+      }
+
+      // Always invalidate favorites query
+      await queryClient.invalidateQueries({
+        queryKey: [FAVORITE_SECRETS_QUERY_KEY],
+      });
+
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+
+      // Revert optimistic update on error
+      updateSecretInQueries(originalFavoriteState);
+
+      toast.error("Failed to toggle favorite. Please try again.");
     }
   };
 
@@ -154,7 +251,10 @@ function SecretsListBase({
                   <Skeleton className="h-6 w-48" />
                   {showVaultBadges && <Skeleton className="h-5 w-20" />}
                 </div>
-                {checkPermissions && <Skeleton className="h-8 w-8" />}
+                <div className="flex items-center gap-1">
+                  <Skeleton className="h-8 w-8" />
+                  {checkPermissions && <Skeleton className="h-8 w-8" />}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -228,32 +328,48 @@ function SecretsListBase({
                   </Badge>
                 )}
               </div>
-              {canEditSecret(secret) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSecret(secret);
-                      }}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDeleteSecret(secret)}
-                      variant="destructive"
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggleFavorite(secret)}
+                  className="p-1"
+                >
+                  <Star
+                    className={`h-4 w-4 ${
+                      secret.isFavorite
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-muted-foreground hover:text-yellow-400"
+                    }`}
+                  />
+                </Button>
+                {canEditSecret(secret) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSecret(secret);
+                        }}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteSecret(secret)}
+                        variant="destructive"
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -404,9 +520,29 @@ function AllSecretsList() {
   );
 }
 
+// Wrapper component for favorite secrets list
+function FavoriteSecretsList() {
+  return (
+    <SecretsListBase
+      queryKey={[FAVORITE_SECRETS_QUERY_KEY]}
+      queryFn={privateKey =>
+        secretsClient.getFavoriteSecretsWithDecryptedData(privateKey)
+      }
+      emptyStateMessage={{
+        primary: "No favorite secrets yet.",
+        secondary: "Star some secrets to see them here.",
+      }}
+      showVaultBadges
+      checkPermissions={false}
+    />
+  );
+}
+
 export {
   SecretsList,
   AllSecretsList,
+  FavoriteSecretsList,
   SECRETS_LIST_QUERY_KEY,
   ALL_SECRETS_QUERY_KEY,
+  FAVORITE_SECRETS_QUERY_KEY,
 };
