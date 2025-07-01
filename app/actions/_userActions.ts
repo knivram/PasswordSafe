@@ -11,10 +11,6 @@ import {
 import { prisma } from "@/lib/prisma";
 import { createVault } from "./_vaultActions";
 
-
-
-
-
 export const finishOnboarding = withErrorHandling(
   withAuth(
     async (
