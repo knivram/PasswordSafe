@@ -1,7 +1,15 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Eye, EyeOff, MoreHorizontal, Edit, Trash, Star } from "lucide-react";
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  Edit,
+  Trash,
+  Star,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -157,54 +165,91 @@ function SecretsListBase({
     // Optimistic update function
     const updateSecretInQueries = (isFavorite: boolean) => {
       // Update current query
-      queryClient.setQueryData(queryKey, (oldData: SecretWithOptionalVault[] | undefined) => {
-        if (!oldData) return [];
-        return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite } : s));
-      });
+      queryClient.setQueryData(
+        queryKey,
+        (oldData: SecretWithOptionalVault[] | undefined) => {
+          if (!oldData) {
+            return [];
+          }
+          return oldData.map(s =>
+            s.id === secret.id ? { ...s, isFavorite } : s
+          );
+        }
+      );
 
       // Update all related queries optimistically
       if (showVaultBadges) {
         // Update all-secrets query
-        queryClient.setQueryData([ALL_SECRETS_QUERY_KEY], (oldData: SecretWithOptionalVault[] | undefined) => {
-          if (!oldData) return [];
-          return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite } : s));
-        });
+        queryClient.setQueryData(
+          [ALL_SECRETS_QUERY_KEY],
+          (oldData: SecretWithOptionalVault[] | undefined) => {
+            if (!oldData) {
+              return [];
+            }
+            return oldData.map(s =>
+              s.id === secret.id ? { ...s, isFavorite } : s
+            );
+          }
+        );
 
         // Update specific vault query
-        queryClient.setQueryData([SECRETS_LIST_QUERY_KEY, secret.vaultId], (oldData: SecretWithOptionalVault[] | undefined) => {
-          if (!oldData) return [];
-          return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite } : s));
-        });
+        queryClient.setQueryData(
+          [SECRETS_LIST_QUERY_KEY, secret.vaultId],
+          (oldData: SecretWithOptionalVault[] | undefined) => {
+            if (!oldData) {
+              return [];
+            }
+            return oldData.map(s =>
+              s.id === secret.id ? { ...s, isFavorite } : s
+            );
+          }
+        );
       } else {
         // Update all-secrets query
-        queryClient.setQueryData([ALL_SECRETS_QUERY_KEY], (oldData: SecretWithOptionalVault[] | undefined) => {
-          if (!oldData) return [];
-          return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite } : s));
-        });
+        queryClient.setQueryData(
+          [ALL_SECRETS_QUERY_KEY],
+          (oldData: SecretWithOptionalVault[] | undefined) => {
+            if (!oldData) {
+              return [];
+            }
+            return oldData.map(s =>
+              s.id === secret.id ? { ...s, isFavorite } : s
+            );
+          }
+        );
       }
 
       // Update favorites query
-      queryClient.setQueryData([FAVORITE_SECRETS_QUERY_KEY], (oldData: SecretWithOptionalVault[] | undefined) => {
-        if (!oldData) return [];
-        if (isFavorite) {
-          // Add to favorites if not already there
-          const exists = oldData.some(s => s.id === secret.id);
-          if (!exists) {
-            return [...oldData, { ...secret, isFavorite: true }];
+      queryClient.setQueryData(
+        [FAVORITE_SECRETS_QUERY_KEY],
+        (oldData: SecretWithOptionalVault[] | undefined) => {
+          if (!oldData) {
+            return [];
           }
-          return oldData.map(s => (s.id === secret.id ? { ...s, isFavorite: true } : s));
-        } else {
-          // Remove from favorites
-          return oldData.filter(s => s.id !== secret.id);
+          if (isFavorite) {
+            // Add to favorites if not already there
+            const exists = oldData.some(s => s.id === secret.id);
+            if (!exists) {
+              return [...oldData, { ...secret, isFavorite: true }];
+            }
+            return oldData.map(s =>
+              s.id === secret.id ? { ...s, isFavorite: true } : s
+            );
+          } else {
+            // Remove from favorites
+            return oldData.filter(s => s.id !== secret.id);
+          }
         }
-      });
+      );
     };
 
     // Apply optimistic update immediately
     updateSecretInQueries(newFavoriteState);
 
     // Show immediate feedback
-    toast.success(newFavoriteState ? "Added to favorites" : "Removed from favorites");
+    toast.success(
+      newFavoriteState ? "Added to favorites" : "Removed from favorites"
+    );
 
     try {
       // Perform server update
@@ -231,7 +276,6 @@ function SecretsListBase({
       await queryClient.invalidateQueries({
         queryKey: [FAVORITE_SECRETS_QUERY_KEY],
       });
-
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
 

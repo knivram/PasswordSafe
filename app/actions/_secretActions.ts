@@ -226,7 +226,6 @@ export const getAllSecretsWithVaults = withErrorHandling(
 
 export const toggleSecretFavorite = withErrorHandling(
   withSecretAccess(async (ctx): Promise<{ isFavorite: boolean }> => {
-    
     try {
       const updatedSecret = await prisma.secret.update({
         where: {
