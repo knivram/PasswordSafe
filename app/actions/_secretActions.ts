@@ -202,6 +202,7 @@ export const getAllSecretsWithVaults = withErrorHandling(
         vaultId: secret.vaultId,
         title: secret.title,
         encryptedData: secret.encryptedData,
+        isFavorite: secret.isFavorite,
         createdAt: secret.createdAt,
         updatedAt: secret.updatedAt,
         vault: {
@@ -217,6 +218,101 @@ export const getAllSecretsWithVaults = withErrorHandling(
       console.error("Get all secrets error:", error);
       throw new AppError(
         "Failed to get secrets. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
+    }
+  })
+);
+
+export const toggleSecretFavorite = withErrorHandling(
+  withSecretAccess(async (ctx): Promise<{ isFavorite: boolean }> => {
+    
+    try {
+      const updatedSecret = await prisma.secret.update({
+        where: {
+          id: ctx.secret.id,
+        },
+        data: {
+          isFavorite: !ctx.secret.isFavorite,
+        },
+        select: {
+          isFavorite: true,
+        },
+      });
+
+      return { isFavorite: updatedSecret.isFavorite };
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Toggle favorite error:", error);
+      throw new AppError(
+        "Failed to toggle favorite. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
+    }
+  })
+);
+
+export const getFavoriteSecretsWithVaults = withErrorHandling(
+  withAuth(async (ctx): Promise<SecretWithVault[]> => {
+    try {
+      // Get all favorite secrets from vaults the user has access to
+      const secrets = await prisma.secret.findMany({
+        where: {
+          isFavorite: true,
+          vault: {
+            vaultAccess: {
+              some: {
+                userId: ctx.user.id,
+              },
+            },
+          },
+        },
+        include: {
+          vault: {
+            select: {
+              id: true,
+              name: true,
+              vaultAccess: {
+                where: {
+                  userId: ctx.user.id,
+                },
+                select: {
+                  wrappedKey: true,
+                },
+                take: 1,
+              },
+            },
+          },
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      });
+
+      // Transform the data to match our expected interface
+      return secrets.map(secret => ({
+        id: secret.id,
+        vaultId: secret.vaultId,
+        title: secret.title,
+        encryptedData: secret.encryptedData,
+        isFavorite: secret.isFavorite,
+        createdAt: secret.createdAt,
+        updatedAt: secret.updatedAt,
+        vault: {
+          id: secret.vault.id,
+          name: secret.vault.name,
+          wrappedKey: secret.vault.vaultAccess[0].wrappedKey,
+        },
+      }));
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Get favorite secrets error:", error);
+      throw new AppError(
+        "Failed to get favorite secrets. Please try again later.",
         ErrorCode.DATABASE_ERROR
       );
     }
