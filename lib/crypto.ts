@@ -1,13 +1,17 @@
 export class CryptoService {
-  public async onboarding(
-    password: string
-  ): Promise<{ publicKey: string; wrappedPrivateKey: string; salt: string; generateAndWrapVaultKey: string }> {
+  public async onboarding(password: string): Promise<{
+    publicKey: string;
+    wrappedPrivateKey: string;
+    salt: string;
+    generateAndWrapVaultKey: string;
+  }> {
     const { publicKey, privateKey } = await this.generateKeyPair();
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const kek = await this.deriveKek(password, salt);
     const wrappedPrivateKey = await this.wrapPrivateKey(privateKey, kek);
     const publicKeyBuffer = await crypto.subtle.exportKey("spki", publicKey);
-    const generateAndWrapVaultKey = await this.generateAndWrapVaultKey(publicKey);
+    const generateAndWrapVaultKey =
+      await this.generateAndWrapVaultKey(publicKey);
 
     return {
       publicKey: BufferTransformer.arrayBufferToBase64(publicKeyBuffer),
