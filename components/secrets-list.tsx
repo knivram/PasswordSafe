@@ -158,6 +158,7 @@ function SecretsListBase({
       toast.error("Failed to delete secret. Please try again.");
     }
   };
+
   const handleToggleFavorite = async (secret: SecretWithOptionalVault) => {
     const originalFavoriteState = secret.isFavorite;
     const newFavoriteState = !originalFavoriteState;
