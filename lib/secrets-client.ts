@@ -7,6 +7,8 @@ import {
   updateSecret,
   deleteSecret,
   getAllSecretsWithVaults,
+  getFavoriteSecretsWithVaults,
+  toggleSecretFavorite,
   type UpdateSecretServerInput,
 } from "@/app/actions/_secretActions";
 import { getVault } from "@/app/actions/_vaultActions";
@@ -135,6 +137,7 @@ export class SecretsClient {
             vaultId: secret.vaultId,
             title: secret.title,
             data: secretData,
+            isFavorite: secret.isFavorite,
             createdAt: secret.createdAt,
             updatedAt: secret.updatedAt,
           });
@@ -199,6 +202,7 @@ export class SecretsClient {
         vaultId: encryptedSecret.vaultId,
         title: encryptedSecret.title,
         data: secretData,
+        isFavorite: encryptedSecret.isFavorite,
         createdAt: encryptedSecret.createdAt,
         updatedAt: encryptedSecret.updatedAt,
       };
@@ -321,6 +325,7 @@ export class SecretsClient {
             vaultId: secretWithVault.vaultId,
             title: secretWithVault.title,
             data: secretData,
+            isFavorite: secretWithVault.isFavorite,
             createdAt: secretWithVault.createdAt,
             updatedAt: secretWithVault.updatedAt,
             vault: {
@@ -344,6 +349,88 @@ export class SecretsClient {
         "Failed to decrypt secrets. Please check your password and try again."
       );
     }
+  }
+
+  async toggleFavorite(secretId: string): Promise<{ isFavorite: boolean }> {
+    try {
+      const response = await toggleSecretFavorite({ secretId });
+      return handleActionResponse(response);
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      throw new Error("Failed to toggle favorite. Please try again.");
+    }
+  }
+
+  async getFavoriteSecretsWithDecryptedData(
+    privateKey: CryptoKey
+  ): Promise<SecretWithDecryptedDataAndVault[]> {
+    try {
+      const secretsWithVaults = await this.getFavoriteSecretsWithVaults();
+      const decryptedSecrets: SecretWithDecryptedDataAndVault[] = [];
+
+      for (const secretWithVault of secretsWithVaults) {
+        try {
+          // Unwrap vault key using private key
+          const vaultKey = await this.cryptoService.unwrapVaultKey({
+            wrappedKey: secretWithVault.vault.wrappedKey,
+            privateKey,
+          });
+
+          // Decrypt with vault key
+          const encryptedData = this.base64ToArrayBuffer(
+            secretWithVault.encryptedData
+          );
+          const { iv, data } = this.unpack(encryptedData);
+
+          const decrypted = await crypto.subtle.decrypt(
+            {
+              name: "AES-GCM",
+              iv,
+            },
+            vaultKey,
+            data
+          );
+
+          const decryptedDataString = new TextDecoder().decode(decrypted);
+          const secretData: SecretData = JSON.parse(decryptedDataString);
+
+          decryptedSecrets.push({
+            id: secretWithVault.id,
+            vaultId: secretWithVault.vaultId,
+            title: secretWithVault.title,
+            data: secretData,
+            isFavorite: secretWithVault.isFavorite,
+            createdAt: secretWithVault.createdAt,
+            updatedAt: secretWithVault.updatedAt,
+            vault: {
+              id: secretWithVault.vault.id,
+              name: secretWithVault.vault.name,
+            },
+          });
+        } catch (decryptError) {
+          console.error(
+            `Failed to decrypt favorite secret ${secretWithVault.id}:`,
+            decryptError
+          );
+          continue;
+        }
+      }
+
+      return decryptedSecrets;
+    } catch (error) {
+      console.error(
+        "Failed to get favorite secrets with decrypted data:",
+        error
+      );
+      throw new Error(
+        "Failed to decrypt favorite secrets. Please check your password and try again."
+      );
+    }
+  }
+
+  private async getFavoriteSecretsWithVaults() {
+    const response = await getFavoriteSecretsWithVaults();
+    return handleActionResponse(response);
   }
 
   private pack(

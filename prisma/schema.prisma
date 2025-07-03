@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -39,15 +33,10 @@ model Secret {
   encryptedData String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  isFavorite    Boolean  @default(false)
   vault         Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
 
   @@index([vaultId])
-}
-
-enum AccessRole {
-  OWNER
-  EDITOR
-  VIEWER
 }
 
 model VaultAccess {
@@ -58,10 +47,16 @@ model VaultAccess {
   wrappedKey String
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
-  vault      Vault      @relation(fields: [vaultId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vault      Vault      @relation(fields: [vaultId], references: [id], onDelete: Cascade)
 
   @@unique([vaultId, userId])
   @@index([userId])
   @@index([vaultId])
+}
+
+enum AccessRole {
+  OWNER
+  EDITOR
+  VIEWER
 }
