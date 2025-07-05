@@ -3,7 +3,7 @@ export class CryptoService {
     publicKey: string;
     wrappedPrivateKey: string;
     salt: string;
-    generateAndWrapVaultKey: string;
+    wrappedDefaultVaultKey: string;
   }> {
     const { publicKey, privateKey } = await this.generateKeyPair();
     const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -18,7 +18,7 @@ export class CryptoService {
       wrappedPrivateKey:
         BufferTransformer.arrayBufferToBase64(wrappedPrivateKey),
       salt: BufferTransformer.arrayBufferToBase64(salt.buffer),
-      generateAndWrapVaultKey: wrappedDefaultVaultKey,
+      wrappedDefaultVaultKey,
     };
   }
 
