@@ -10,7 +10,8 @@ export class CryptoService {
     const kek = await this.deriveKek(password, salt);
     const wrappedPrivateKey = await this.wrapPrivateKey(privateKey, kek);
     const publicKeyBuffer = await crypto.subtle.exportKey("spki", publicKey);
-    const {wrappedKey: wrappedDefaultVaultKey } = await this.generateAndWrapVaultKey(publicKey);
+    const { wrappedKey: wrappedDefaultVaultKey } =
+      await this.generateAndWrapVaultKey(publicKey);
 
     return {
       publicKey: BufferTransformer.arrayBufferToBase64(publicKeyBuffer),
