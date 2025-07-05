@@ -19,7 +19,7 @@ export const finishOnboarding = withErrorHandling(
         salt: string;
         publicKey: string;
         wrappedPrivateKey: string;
-        generateAndWrapVaultKey: string;
+        wrappedDefaultVaultKey: string;
       }
     ) => {
       const client = await clerkClient();
@@ -28,7 +28,7 @@ export const finishOnboarding = withErrorHandling(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const email = user.primaryEmailAddress!.emailAddress;
 
-      const { salt, publicKey, wrappedPrivateKey, generateAndWrapVaultKey } =
+      const { salt, publicKey, wrappedPrivateKey, wrappedDefaultVaultKey } =
         data;
 
       try {
@@ -59,7 +59,7 @@ export const finishOnboarding = withErrorHandling(
 
         await createVault({
           name: "Private",
-          wrappedKey: generateAndWrapVaultKey,
+          wrappedKey: wrappedDefaultVaultKey,
         });
 
         await client.users.updateUser(user.id, {

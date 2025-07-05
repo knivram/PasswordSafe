@@ -51,7 +51,7 @@ export function SignUpForm({
         salt,
         publicKey,
         wrappedPrivateKey,
-        generateAndWrapVaultKey,
+        wrappedDefaultVaultKey: generateAndWrapVaultKey,
       });
 
       // Handle error responses
