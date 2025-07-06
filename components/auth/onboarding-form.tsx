@@ -1,9 +1,9 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { finishOnboarding } from "@/app/actions/_userActions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,14 @@ import { cryptoService } from "@/lib/crypto";
 import { isErrorResponse, getErrorInfo } from "@/lib/query-utils";
 import { cn } from "@/lib/utils";
 
+const passwordRequirements = [
+  { id: "length", label: "Length: at least 12 characters", test: (pwd: string) => pwd.length >= 12 },
+  { id: "uppercase", label: "At least 1 uppercase letter (A–Z)", test: (pwd: string) => /[A-Z]/.test(pwd) },
+  { id: "lowercase", label: "At least 1 lowercase letter (a–z)", test: (pwd: string) => /[a-z]/.test(pwd) },
+  { id: "number", label: "At least 1 number (0–9)", test: (pwd: string) => /\d/.test(pwd) },
+  { id: "special", label: "At least 1 special character (!@#$%^&*()_+-", test: (pwd: string) => /[!@#$%^&*()_+\-]/.test(pwd) },
+];
+
 export function SignUpForm({
   className,
   ...props
@@ -31,10 +39,26 @@ export function SignUpForm({
   const router = useRouter();
   const { user } = useUser();
 
+  const passwordChecks = useMemo(() => {
+    return passwordRequirements.map(req => ({
+      ...req,
+      isValid: req.test(password)
+    }));
+  }, [password]);
+
+  const isPasswordValid = passwordChecks.every(check => check.isValid);
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
+
+    if (!isPasswordValid) {
+      setError("Password does not meet all requirements");
+      setIsLoading(false);
+      return;
+    }
+
     if (password !== repeatPassword) {
       setError("Passwords do not match");
       setIsLoading(false);
@@ -49,7 +73,7 @@ export function SignUpForm({
         salt,
         publicKey,
         wrappedPrivateKey,
-        wrappedDefaultVaultKey,
+        wrappedDefaultVaultKey: wrappedDefaultVaultKey,
       });
 
       // Handle error responses
@@ -131,6 +155,23 @@ export function SignUpForm({
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                 />
+                {password && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">Password requirements:</p>
+                    {passwordChecks.map((check) => (
+                      <div key={check.id} className="flex items-center gap-2 text-xs">
+                        {check.isValid ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <X className="h-3 w-3 text-red-500" />
+                        )}
+                        <span className={check.isValid ? "text-green-600" : "text-red-600"}>
+                          {check.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
@@ -146,7 +187,11 @@ export function SignUpForm({
                   onChange={e => setRepeatPassword(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || !isPasswordValid || password !== repeatPassword}
+              >
                 {isLoading
                   ? "Setting master password..."
                   : "Set master password"}
@@ -158,3 +203,5 @@ export function SignUpForm({
     </div>
   );
 }
+
+
