@@ -23,11 +23,31 @@ import { cn } from "@/lib/utils";
 const cryptoService = new CryptoService();
 
 const passwordRequirements = [
-  { id: "length", label: "Length: at least 12 characters", test: (pwd: string) => pwd.length >= 12 },
-  { id: "uppercase", label: "At least 1 uppercase letter (A–Z)", test: (pwd: string) => /[A-Z]/.test(pwd) },
-  { id: "lowercase", label: "At least 1 lowercase letter (a–z)", test: (pwd: string) => /[a-z]/.test(pwd) },
-  { id: "number", label: "At least 1 number (0–9)", test: (pwd: string) => /\d/.test(pwd) },
-  { id: "special", label: "At least 1 special character (!@#$%^&*()_+-", test: (pwd: string) => /[!@#$%^&*()_+\-]/.test(pwd) },
+  {
+    id: "length",
+    label: "Length: at least 12 characters",
+    test: (pwd: string) => pwd.length >= 12,
+  },
+  {
+    id: "uppercase",
+    label: "At least 1 uppercase letter (A–Z)",
+    test: (pwd: string) => /[A-Z]/.test(pwd),
+  },
+  {
+    id: "lowercase",
+    label: "At least 1 lowercase letter (a–z)",
+    test: (pwd: string) => /[a-z]/.test(pwd),
+  },
+  {
+    id: "number",
+    label: "At least 1 number (0–9)",
+    test: (pwd: string) => /\d/.test(pwd),
+  },
+  {
+    id: "special",
+    label: "At least 1 special character (!@#$%^&*()_+-",
+    test: (pwd: string) => /[!@#$%^&*()_+\-]/.test(pwd),
+  },
 ];
 
 export function SignUpForm({
@@ -44,7 +64,7 @@ export function SignUpForm({
   const passwordChecks = useMemo(() => {
     return passwordRequirements.map(req => ({
       ...req,
-      isValid: req.test(password)
+      isValid: req.test(password),
     }));
   }, [password]);
 
@@ -159,15 +179,24 @@ export function SignUpForm({
                 />
                 {password && (
                   <div className="mt-2 space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">Password requirements:</p>
-                    {passwordChecks.map((check) => (
-                      <div key={check.id} className="flex items-center gap-2 text-xs">
+                    <p className="text-muted-foreground text-xs font-medium">
+                      Password requirements:
+                    </p>
+                    {passwordChecks.map(check => (
+                      <div
+                        key={check.id}
+                        className="flex items-center gap-2 text-xs"
+                      >
                         {check.isValid ? (
                           <Check className="h-3 w-3 text-green-500" />
                         ) : (
                           <X className="h-3 w-3 text-red-500" />
                         )}
-                        <span className={check.isValid ? "text-green-600" : "text-red-600"}>
+                        <span
+                          className={
+                            check.isValid ? "text-green-600" : "text-red-600"
+                          }
+                        >
                           {check.label}
                         </span>
                       </div>
@@ -192,7 +221,9 @@ export function SignUpForm({
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading || !isPasswordValid || password !== repeatPassword}
+                disabled={
+                  isLoading || !isPasswordValid || password !== repeatPassword
+                }
               >
                 {isLoading
                   ? "Setting master password..."
@@ -205,5 +236,3 @@ export function SignUpForm({
     </div>
   );
 }
-
-
