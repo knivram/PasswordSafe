@@ -16,14 +16,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CryptoService } from "@/lib/crypto";
+import { cryptoService } from "@/lib/crypto";
 import { isErrorResponse, getErrorInfo } from "@/lib/query-utils";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-const cryptoService = new CryptoService();
 
 const passwordSchema = z
   .object({
@@ -96,14 +94,14 @@ export function SignUpForm({
     setError("");
     setIsLoading(true);
     try {
-      const { publicKey, wrappedPrivateKey, salt, wrappedDefaultVaultKey } =
+      const { publicKey, wrappedPrivateKey, salt } =
         await cryptoService.onboarding(data.password);
 
       const response = await finishOnboarding({
         salt,
         publicKey,
         wrappedPrivateKey,
-        wrappedDefaultVaultKey: wrappedDefaultVaultKey,
+        wrappedDefaultVaultKey: "",
       });
 
       if (isErrorResponse(response)) {

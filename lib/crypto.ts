@@ -1,24 +1,17 @@
-export class CryptoService {
-  public async onboarding(password: string): Promise<{
-    publicKey: string;
-    wrappedPrivateKey: string;
-    salt: string;
-    wrappedDefaultVaultKey: string;
-  }> {
+class CryptoService {
+  public async onboarding(
+    password: string
+  ): Promise<{ publicKey: string; wrappedPrivateKey: string; salt: string }> {
     const { publicKey, privateKey } = await this.generateKeyPair();
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const kek = await this.deriveKek(password, salt);
     const wrappedPrivateKey = await this.wrapPrivateKey(privateKey, kek);
     const publicKeyBuffer = await crypto.subtle.exportKey("spki", publicKey);
-    const { wrappedKey: wrappedDefaultVaultKey } =
-      await this.generateAndWrapVaultKey(publicKey);
-
     return {
       publicKey: BufferTransformer.arrayBufferToBase64(publicKeyBuffer),
       wrappedPrivateKey:
         BufferTransformer.arrayBufferToBase64(wrappedPrivateKey),
       salt: BufferTransformer.arrayBufferToBase64(salt.buffer),
-      wrappedDefaultVaultKey,
     };
   }
 
@@ -196,7 +189,7 @@ export class CryptoService {
         hash: "SHA-256",
       },
       true,
-      ["encrypt", "decrypt", "wrapKey"]
+      ["encrypt", "decrypt"]
     );
   }
 
@@ -311,3 +304,5 @@ const BufferTransformer = {
     return btoa(binary);
   },
 };
+
+export const cryptoService = new CryptoService();
