@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { createVault, updateVault } from "@/app/actions/_vaultActions";
 import { useKeyStore } from "@/context/KeyStore";
 import type { Vault } from "@/generated/prisma";
-import { CryptoService } from "@/lib/crypto";
+import { cryptoService } from "@/lib/crypto";
 import { getErrorInfo, handleActionResponse } from "@/lib/query-utils";
 import { SIDEBAR_VAULT_LIST_QUERY_KEY } from "./sidebar-vault-list";
 import { Button } from "./ui/button";
@@ -38,7 +38,6 @@ export function VaultFormDialog({
   isOpen,
   onOpenChange,
 }: VaultFormDialogProps) {
-  const cryptoService = new CryptoService();
   const queryClient = useQueryClient();
   const { isInitialized, publicKey } = useKeyStore();
   const [_isOpen, _setIsOpen] = useState(false);
