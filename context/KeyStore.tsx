@@ -9,10 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { getUserData } from "@/app/actions/_userActions";
-import { CryptoService } from "@/lib/crypto";
+import { cryptoService } from "@/lib/crypto";
 import { isErrorResponse } from "@/lib/query-utils";
-
-const cryptoService = new CryptoService();
 
 interface KeyStoreInitContextType {
   isInitialized: boolean;

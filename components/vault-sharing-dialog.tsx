@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { findUserForSharing, shareVault } from "@/app/actions/_sharingActions";
 import { useKeyStore } from "@/context/KeyStore";
 import type { AccessRole } from "@/generated/prisma";
-import { CryptoService } from "@/lib/crypto";
+import { cryptoService } from "@/lib/crypto";
 import { SHAREABLE_ROLES } from "@/lib/prisma";
 import { cn, getRoleDisplayName } from "@/lib/utils";
 import { SharedUsersList } from "./shared-users-list";
@@ -87,11 +87,10 @@ export function VaultSharingDialog({
       }
 
       // Rewrap the vault key for the target user
-      const crypto = new CryptoService();
-      const targetUserPublicKey = await crypto.importPublicKeyFromBase64(
+      const targetUserPublicKey = await cryptoService.importPublicKeyFromBase64(
         targetUser.publicKey
       );
-      const newWrappedKey = await crypto.rewrapVaultKeyForUser({
+      const newWrappedKey = await cryptoService.rewrapVaultKeyForUser({
         wrappedKey,
         ownerPrivateKey: privateKey,
         targetUserPublicKey,
