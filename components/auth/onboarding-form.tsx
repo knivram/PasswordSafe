@@ -31,7 +31,10 @@ const passwordSchema = z
       .regex(/[A-Z]/, "At least 1 uppercase letter (A–Z)")
       .regex(/[a-z]/, "At least 1 lowercase letter (a–z)")
       .regex(/\d/, "At least 1 number (0–9)")
-      .regex(/[!@#$%^&*()_+\-]/, "At least 1 special character (!@#$%^&*()_+-)"),
+      .regex(
+        /[!@#$%^&*()_+\-]/,
+        "At least 1 special character (!@#$%^&*()_+-)"
+      ),
     repeatPassword: z.string(),
   })
   .refine(data => data.password === data.repeatPassword, {
@@ -111,8 +114,8 @@ export function SignUpForm({
           error.code === "ONBOARDING_FAILED"
             ? "Failed to complete onboarding. Please try again."
             : error.code === "UNAUTHORIZED"
-            ? "Authentication failed. Please sign in again."
-            : error.message;
+              ? "Authentication failed. Please sign in again."
+              : error.message;
         setError(errorMessage);
         return;
       }
@@ -203,7 +206,7 @@ export function SignUpForm({
                       </div>
                     ))}
                     {errors.password && (
-                      <div className="text-xs text-red-600 pt-1">
+                      <div className="pt-1 text-xs text-red-600">
                         {errors.password.message as string}
                       </div>
                     )}
@@ -223,7 +226,7 @@ export function SignUpForm({
                   {...register("repeatPassword")}
                 />
                 {errors.repeatPassword && (
-                  <div className="text-xs text-red-600 pt-1">
+                  <div className="pt-1 text-xs text-red-600">
                     {errors.repeatPassword.message as string}
                   </div>
                 )}
@@ -231,9 +234,7 @@ export function SignUpForm({
               <Button
                 type="submit"
                 className="w-full"
-                disabled={
-                  isLoading || !isValid
-                }
+                disabled={isLoading || !isValid}
               >
                 {isLoading
                   ? "Setting master password..."
