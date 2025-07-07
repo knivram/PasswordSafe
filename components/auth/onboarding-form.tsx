@@ -16,11 +16,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CryptoService } from "@/lib/crypto";
+import { cryptoService } from "@/lib/crypto";
 import { isErrorResponse, getErrorInfo } from "@/lib/query-utils";
 import { cn } from "@/lib/utils";
-
-const cryptoService = new CryptoService();
 
 export function SignUpForm({
   className,

@@ -20,15 +20,9 @@ import type {
   SecretWithDecryptedDataAndVault,
 } from "@/types/secret";
 import type { VaultWithAccess } from "@/types/vault";
-import { CryptoService } from "./crypto";
+import { cryptoService } from "./crypto";
 
 export class SecretsClient {
-  private cryptoService: CryptoService;
-
-  constructor() {
-    this.cryptoService = new CryptoService();
-  }
-
   async createSecret(
     input: CreateSecretInput,
     privateKey: CryptoKey
@@ -39,14 +33,14 @@ export class SecretsClient {
       const vault = handleActionResponse(vaultResponse);
 
       // Unwrap the vault key
-      const vaultKey = await this.cryptoService.unwrapVaultKey({
+      const vaultKey = await cryptoService.unwrapVaultKey({
         wrappedKey: vault.wrappedKey,
         privateKey,
       });
 
       // Encrypt the secret data with the vault key
       const dataString = JSON.stringify(input.data);
-      const encryptedData = await this.cryptoService.encryptSecret({
+      const encryptedData = await cryptoService.encryptSecret({
         secret: dataString,
         vaultKey,
       });
@@ -89,7 +83,7 @@ export class SecretsClient {
     privateKey: CryptoKey
   ): Promise<SecretWithDecryptedData[]> {
     try {
-      const vaultKey = await this.cryptoService.unwrapVaultKey({
+      const vaultKey = await cryptoService.unwrapVaultKey({
         wrappedKey: vault.wrappedKey,
         privateKey,
       });
@@ -99,7 +93,7 @@ export class SecretsClient {
 
       for (const secret of encryptedSecrets) {
         try {
-          const decryptedDataString = await this.cryptoService.decryptSecret({
+          const decryptedDataString = await cryptoService.decryptSecret({
             encryptedSecret: secret.encryptedData,
             vaultKey,
           });
@@ -153,14 +147,14 @@ export class SecretsClient {
         const vault = handleActionResponse(vaultResponse);
 
         // Unwrap the vault key
-        const vaultKey = await this.cryptoService.unwrapVaultKey({
+        const vaultKey = await cryptoService.unwrapVaultKey({
           wrappedKey: vault.wrappedKey,
           privateKey,
         });
 
         // Encrypt the new data with the vault key
         const dataString = JSON.stringify(updatedSecret.data);
-        serverUpdates.encryptedData = await this.cryptoService.encryptSecret({
+        serverUpdates.encryptedData = await cryptoService.encryptSecret({
           secret: dataString,
           vaultKey,
         });
@@ -199,14 +193,14 @@ export class SecretsClient {
             secretWithVault.vault.id
           );
           if (!vaultKey) {
-            vaultKey = await this.cryptoService.unwrapVaultKey({
+            vaultKey = await cryptoService.unwrapVaultKey({
               wrappedKey: secretWithVault.vault.wrappedKey,
               privateKey,
             });
             vaultKeys.set(secretWithVault.vault.id, vaultKey);
           }
 
-          const decryptedDataString = await this.cryptoService.decryptSecret({
+          const decryptedDataString = await cryptoService.decryptSecret({
             encryptedSecret: secretWithVault.encryptedData,
             vaultKey,
           });
