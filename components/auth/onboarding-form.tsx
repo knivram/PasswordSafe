@@ -23,7 +23,6 @@ import { cryptoService } from "@/lib/crypto";
 import { isErrorResponse, getErrorInfo } from "@/lib/query-utils";
 import { cn } from "@/lib/utils";
 
-
 const passwordSchema = z
   .object({
     password: z
@@ -95,14 +94,14 @@ export function SignUpForm({
     setError("");
     setIsLoading(true);
     try {
-      const { publicKey, wrappedPrivateKey, salt, wrappedDefaultVaultKey } =
+      const { publicKey, wrappedPrivateKey, salt } =
         await cryptoService.onboarding(data.password);
 
       const response = await finishOnboarding({
         salt,
         publicKey,
         wrappedPrivateKey,
-        wrappedDefaultVaultKey: wrappedDefaultVaultKey,
+        wrappedDefaultVaultKey: "",
       });
 
       if (isErrorResponse(response)) {
