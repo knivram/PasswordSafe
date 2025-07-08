@@ -160,11 +160,113 @@ export interface SecretWithVault extends Secret {
 }
 
 export const getAllSecretsWithVaults = withErrorHandling(
+  withAuth(
+    async (
+      ctx,
+      filter: { isFavorite?: boolean } = {}
+    ): Promise<SecretWithVault[]> => {
+      try {
+        // Get all secrets from vaults the user has access to, limited to latest 50
+        const secrets = await prisma.secret.findMany({
+          where: {
+            ...(filter.isFavorite ? { isFavorite: true } : {}),
+            vault: {
+              vaultAccess: {
+                some: {
+                  userId: ctx.user.id,
+                },
+              },
+            },
+          },
+          include: {
+            vault: {
+              select: {
+                id: true,
+                name: true,
+                vaultAccess: {
+                  where: {
+                    userId: ctx.user.id,
+                  },
+                  select: {
+                    wrappedKey: true,
+                  },
+                  take: 1,
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 50,
+        });
+
+        // Transform the data to match our expected interface
+        return secrets.map(secret => ({
+          id: secret.id,
+          vaultId: secret.vaultId,
+          title: secret.title,
+          encryptedData: secret.encryptedData,
+          isFavorite: secret.isFavorite,
+          createdAt: secret.createdAt,
+          updatedAt: secret.updatedAt,
+          vault: {
+            id: secret.vault.id,
+            name: secret.vault.name,
+            wrappedKey: secret.vault.vaultAccess[0].wrappedKey,
+          },
+        }));
+      } catch (error) {
+        if (error instanceof AppError) {
+          throw error;
+        }
+        console.error("Get all secrets error:", error);
+        throw new AppError(
+          "Failed to get secrets. Please try again later.",
+          ErrorCode.DATABASE_ERROR
+        );
+      }
+    }
+  )
+);
+
+export const toggleSecretFavorite = withErrorHandling(
+  withSecretAccess(async (ctx): Promise<{ isFavorite: boolean }> => {
+    try {
+      const updatedSecret = await prisma.secret.update({
+        where: {
+          id: ctx.secret.id,
+        },
+        data: {
+          isFavorite: !ctx.secret.isFavorite,
+        },
+        select: {
+          isFavorite: true,
+        },
+      });
+
+      return { isFavorite: updatedSecret.isFavorite };
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Toggle favorite error:", error);
+      throw new AppError(
+        "Failed to toggle favorite. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
+    }
+  })
+);
+
+// Re-export getAllSecretsWithVaults with isFavorite filter for backward compatibility
+export const getFavoriteSecretsWithVaults = withErrorHandling(
   withAuth(async (ctx): Promise<SecretWithVault[]> => {
     try {
-      // Get all secrets from vaults the user has access to, limited to latest 50
+      // Call the same query but with isFavorite filter
       const secrets = await prisma.secret.findMany({
         where: {
+          isFavorite: true,
           vault: {
             vaultAccess: {
               some: {
@@ -193,7 +295,6 @@ export const getAllSecretsWithVaults = withErrorHandling(
         orderBy: {
           createdAt: "desc",
         },
-        take: 50,
       });
 
       // Transform the data to match our expected interface
@@ -202,6 +303,7 @@ export const getAllSecretsWithVaults = withErrorHandling(
         vaultId: secret.vaultId,
         title: secret.title,
         encryptedData: secret.encryptedData,
+        isFavorite: secret.isFavorite,
         createdAt: secret.createdAt,
         updatedAt: secret.updatedAt,
         vault: {
@@ -214,9 +316,9 @@ export const getAllSecretsWithVaults = withErrorHandling(
       if (error instanceof AppError) {
         throw error;
       }
-      console.error("Get all secrets error:", error);
+      console.error("Get favorite secrets error:", error);
       throw new AppError(
-        "Failed to get secrets. Please try again later.",
+        "Failed to get favorite secrets. Please try again later.",
         ErrorCode.DATABASE_ERROR
       );
     }

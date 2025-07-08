@@ -372,7 +372,7 @@ function SecretsList({ vaultId, vault }: SecretsListProps) {
     <SecretsListBase
       queryKey={[SECRETS_LIST_QUERY_KEY, vaultId]}
       queryFn={privateKey =>
-        secretsClient.getSecretsWithDecryptedData(vault, privateKey)
+        secretsClient.getSecretsWithDecryptedData(vaultId, privateKey)
       }
       emptyStateMessage={{
         primary: "No secrets in this vault yet.",
