@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { List, MoreVerticalIcon, UsersIcon } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { List, MoreVerticalIcon, UsersIcon, Star } from "lucide-react";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { deleteVault, getVaults } from "@/app/actions/_vaultActions";
 import { handleActionResponse, getErrorInfo } from "@/lib/query-utils";
@@ -142,6 +142,7 @@ const SidebarVaultList = ({
 }) => {
   const { vaultId } = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const { data: vaults, error } = useQuery({
     queryKey: [SIDEBAR_VAULT_LIST_QUERY_KEY],
     queryFn: async () => {
@@ -174,12 +175,23 @@ const SidebarVaultList = ({
             <SidebarMenu>
               <SidebarMenuItem key="all-vaults">
                 <SidebarMenuButton
-                  isActive={vaultId === undefined}
+                  isActive={vaultId === undefined && pathname === "/app"}
                   onClick={() => router.push(`/app`)}
                 >
                   <div className="flex w-full items-center justify-between gap-2">
                     <span>All Secrets</span>
                     <List className="size-4" />
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem key="favorites">
+                <SidebarMenuButton
+                  isActive={pathname === "/app/favorites"}
+                  onClick={() => router.push(`/app/favorites`)}
+                >
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <span>Favorites</span>
+                    <Star className="size-4" />
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -205,12 +217,23 @@ const SidebarVaultList = ({
           <SidebarMenu>
             <SidebarMenuItem key="all-vaults">
               <SidebarMenuButton
-                isActive={vaultId === undefined}
+                isActive={vaultId === undefined && pathname === "/app"}
                 onClick={() => router.push(`/app`)}
               >
                 <div className="flex w-full items-center justify-between gap-2">
                   <span>All Secrets</span>
                   <List className="size-4" />
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem key="favorites">
+              <SidebarMenuButton
+                isActive={pathname === "/app/favorites"}
+                onClick={() => router.push(`/app/favorites`)}
+              >
+                <div className="flex w-full items-center justify-between gap-2">
+                  <span>Favorites</span>
+                  <Star className="size-4" />
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
