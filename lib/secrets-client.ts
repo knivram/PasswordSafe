@@ -19,15 +19,10 @@ import type {
   SecretWithDecryptedData,
   SecretWithDecryptedDataAndVault,
 } from "@/types/secret";
-import { CryptoService } from "./crypto";
+import type { VaultWithAccess } from "@/types/vault";
+import { cryptoService } from "./crypto";
 
 export class SecretsClient {
-  private cryptoService: CryptoService;
-
-  constructor() {
-    this.cryptoService = new CryptoService();
-  }
-
   async createSecret(
     input: CreateSecretInput,
     privateKey: CryptoKey
@@ -38,28 +33,17 @@ export class SecretsClient {
       const vault = handleActionResponse(vaultResponse);
 
       // Unwrap the vault key
-      const vaultKey = await this.cryptoService.unwrapVaultKey({
+      const vaultKey = await cryptoService.unwrapVaultKey({
         wrappedKey: vault.wrappedKey,
         privateKey,
       });
 
       // Encrypt the secret data with the vault key
       const dataString = JSON.stringify(input.data);
-      const data = new TextEncoder().encode(dataString);
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-
-      const encrypted = await crypto.subtle.encrypt(
-        {
-          name: "AES-GCM",
-          iv,
-        },
+      const encryptedData = await cryptoService.encryptSecret({
+        secret: dataString,
         vaultKey,
-        data
-      );
-
-      // Pack IV and encrypted data
-      const packedData = this.pack(iv, encrypted);
-      const encryptedData = this.arrayBufferToBase64(packedData);
+      });
 
       const response = await createSecret({
         vaultId: input.vaultId,
@@ -95,39 +79,24 @@ export class SecretsClient {
   }
 
   async getSecretsWithDecryptedData(
-    vaultId: string,
+    vault: VaultWithAccess,
     privateKey: CryptoKey
   ): Promise<SecretWithDecryptedData[]> {
     try {
-      // Get vault to access the wrapped vault key
-      const vaultResponse = await getVault({ vaultId });
-      const vault = handleActionResponse(vaultResponse);
-
-      // Unwrap the vault key
-      const vaultKey = await this.cryptoService.unwrapVaultKey({
+      const vaultKey = await cryptoService.unwrapVaultKey({
         wrappedKey: vault.wrappedKey,
         privateKey,
       });
 
-      const encryptedSecrets = await this.getSecrets(vaultId);
+      const encryptedSecrets = await this.getSecrets(vault.id);
       const decryptedSecrets: SecretWithDecryptedData[] = [];
 
       for (const secret of encryptedSecrets) {
         try {
-          // Decrypt with vault key
-          const encryptedData = this.base64ToArrayBuffer(secret.encryptedData);
-          const { iv, data } = this.unpack(encryptedData);
-
-          const decrypted = await crypto.subtle.decrypt(
-            {
-              name: "AES-GCM",
-              iv,
-            },
+          const decryptedDataString = await cryptoService.decryptSecret({
+            encryptedSecret: secret.encryptedData,
             vaultKey,
-            data
-          );
-
-          const decryptedDataString = new TextDecoder().decode(decrypted);
+          });
           const secretData: SecretData = JSON.parse(decryptedDataString);
 
           decryptedSecrets.push({
@@ -149,63 +118,6 @@ export class SecretsClient {
       console.error("Failed to get secrets with decrypted data:", error);
       throw new Error(
         "Failed to decrypt secrets. Please check your password and try again."
-      );
-    }
-  }
-
-  async getSecretWithDecryptedData(
-    secretId: string,
-    privateKey: CryptoKey
-  ): Promise<SecretWithDecryptedData | null> {
-    try {
-      const encryptedSecret = await this.getSecret(secretId);
-
-      if (!encryptedSecret) {
-        return null;
-      }
-
-      // Get vault to access the wrapped vault key
-      const vaultResponse = await getVault({
-        vaultId: encryptedSecret.vaultId,
-      });
-      const vault = handleActionResponse(vaultResponse);
-
-      // Unwrap the vault key
-      const vaultKey = await this.cryptoService.unwrapVaultKey({
-        wrappedKey: vault.wrappedKey,
-        privateKey,
-      });
-
-      // Decrypt with vault key
-      const encryptedData = this.base64ToArrayBuffer(
-        encryptedSecret.encryptedData
-      );
-      const { iv, data } = this.unpack(encryptedData);
-
-      const decrypted = await crypto.subtle.decrypt(
-        {
-          name: "AES-GCM",
-          iv,
-        },
-        vaultKey,
-        data
-      );
-
-      const decryptedDataString = new TextDecoder().decode(decrypted);
-      const secretData: SecretData = JSON.parse(decryptedDataString);
-
-      return {
-        id: encryptedSecret.id,
-        vaultId: encryptedSecret.vaultId,
-        title: encryptedSecret.title,
-        data: secretData,
-        createdAt: encryptedSecret.createdAt,
-        updatedAt: encryptedSecret.updatedAt,
-      };
-    } catch (error) {
-      console.error("Failed to get secret with decrypted data:", error);
-      throw new Error(
-        "Failed to decrypt secret. Please check your password and try again."
       );
     }
   }
@@ -235,28 +147,17 @@ export class SecretsClient {
         const vault = handleActionResponse(vaultResponse);
 
         // Unwrap the vault key
-        const vaultKey = await this.cryptoService.unwrapVaultKey({
+        const vaultKey = await cryptoService.unwrapVaultKey({
           wrappedKey: vault.wrappedKey,
           privateKey,
         });
 
         // Encrypt the new data with the vault key
         const dataString = JSON.stringify(updatedSecret.data);
-        const data = new TextEncoder().encode(dataString);
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-
-        const encrypted = await crypto.subtle.encrypt(
-          {
-            name: "AES-GCM",
-            iv,
-          },
+        serverUpdates.encryptedData = await cryptoService.encryptSecret({
+          secret: dataString,
           vaultKey,
-          data
-        );
-
-        // Pack IV and encrypted data
-        const packedData = this.pack(iv, encrypted);
-        serverUpdates.encryptedData = this.arrayBufferToBase64(packedData);
+        });
       }
 
       const response = await updateSecret({
@@ -292,28 +193,17 @@ export class SecretsClient {
             secretWithVault.vault.id
           );
           if (!vaultKey) {
-            vaultKey = await this.cryptoService.unwrapVaultKey({
+            vaultKey = await cryptoService.unwrapVaultKey({
               wrappedKey: secretWithVault.vault.wrappedKey,
               privateKey,
             });
             vaultKeys.set(secretWithVault.vault.id, vaultKey);
           }
 
-          const encryptedData = this.base64ToArrayBuffer(
-            secretWithVault.encryptedData
-          );
-          const { iv, data } = this.unpack(encryptedData);
-
-          const decrypted = await crypto.subtle.decrypt(
-            {
-              name: "AES-GCM",
-              iv,
-            },
+          const decryptedDataString = await cryptoService.decryptSecret({
+            encryptedSecret: secretWithVault.encryptedData,
             vaultKey,
-            data
-          );
-
-          const decryptedDataString = new TextDecoder().decode(decrypted);
+          });
           const secretData: SecretData = JSON.parse(decryptedDataString);
 
           decryptedSecrets.push({
@@ -344,50 +234,5 @@ export class SecretsClient {
         "Failed to decrypt secrets. Please check your password and try again."
       );
     }
-  }
-
-  private pack(
-    iv: Uint8Array,
-    data: ArrayBuffer | ArrayBufferView
-  ): ArrayBuffer {
-    const dataBytes = ArrayBuffer.isView(data)
-      ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
-      : new Uint8Array(data);
-    const out = new Uint8Array(iv.byteLength + dataBytes.byteLength);
-    out.set(iv, 0);
-    out.set(dataBytes, iv.byteLength);
-    return out.buffer;
-  }
-
-  private unpack(src: ArrayBuffer | ArrayBufferView): {
-    iv: Uint8Array;
-    data: Uint8Array;
-  } {
-    const bytes = ArrayBuffer.isView(src)
-      ? new Uint8Array(src.buffer, src.byteOffset, src.byteLength)
-      : new Uint8Array(src);
-    const iv = bytes.subarray(0, 12);
-    const data = bytes.subarray(12);
-    return { iv, data };
-  }
-
-  private base64ToArrayBuffer(base64: string): ArrayBuffer {
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      // eslint-disable-next-line security/detect-object-injection
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes.buffer as ArrayBuffer;
-  }
-
-  private arrayBufferToBase64(buffer: ArrayBuffer): string {
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) {
-      // eslint-disable-next-line security/detect-object-injection
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
   }
 }
