@@ -42,13 +42,14 @@ export function SignUpForm({
     }
 
     try {
-      const { publicKey, wrappedPrivateKey, salt } =
+      const { publicKey, wrappedPrivateKey, salt, wrappedDefaultVaultKey } =
         await cryptoService.onboarding(password);
 
       const response = await finishOnboarding({
         salt,
         publicKey,
         wrappedPrivateKey,
+        wrappedDefaultVaultKey,
       });
 
       // Handle error responses
