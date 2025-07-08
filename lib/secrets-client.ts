@@ -440,6 +440,89 @@ export class SecretsClient {
     }
   }
 
+  async toggleFavorite(secretId: string): Promise<{ isFavorite: boolean }> {
+    try {
+      const response = await toggleSecretFavorite({ secretId });
+      return handleActionResponse(response);
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      throw new Error("Failed to toggle favorite. Please try again.");
+    }
+  }
+
+  async getFavoriteSecretsWithDecryptedData(
+    privateKey: CryptoKey
+  ): Promise<SecretWithDecryptedDataAndVault[]> {
+    try {
+      const response = await getFavoriteSecretsWithVaults();
+      const secretsWithVaults = handleActionResponse(response);
+      const vaultKeys = new Map<string, CryptoKey>();
+      const decryptedSecrets: SecretWithDecryptedDataAndVault[] = [];
+
+      for (const secretWithVault of secretsWithVaults) {
+        try {
+          let vaultKey: CryptoKey | undefined = vaultKeys.get(
+            secretWithVault.vault.id
+          );
+          if (!vaultKey) {
+            vaultKey = await this.cryptoService.unwrapVaultKey({
+              wrappedKey: secretWithVault.vault.wrappedKey,
+              privateKey,
+            });
+            vaultKeys.set(secretWithVault.vault.id, vaultKey);
+          }
+
+          const encryptedData = this.base64ToArrayBuffer(
+            secretWithVault.encryptedData
+          );
+          const { iv, data } = this.unpack(encryptedData);
+
+          const decrypted = await crypto.subtle.decrypt(
+            {
+              name: "AES-GCM",
+              iv,
+            },
+            vaultKey,
+            data
+          );
+
+          const decryptedDataString = new TextDecoder().decode(decrypted);
+          const secretData: SecretData = JSON.parse(decryptedDataString);
+
+          decryptedSecrets.push({
+            id: secretWithVault.id,
+            vaultId: secretWithVault.vaultId,
+            title: secretWithVault.title,
+            data: secretData,
+            isFavorite: secretWithVault.isFavorite,
+            createdAt: secretWithVault.createdAt,
+            updatedAt: secretWithVault.updatedAt,
+            vault: {
+              id: secretWithVault.vault.id,
+              name: secretWithVault.vault.name,
+            },
+          });
+        } catch (decryptError) {
+          console.error(
+            `Failed to decrypt favorite secret ${secretWithVault.id}:`,
+            decryptError
+          );
+          continue;
+        }
+      }
+
+      return decryptedSecrets;
+    } catch (error) {
+      console.error(
+        "Failed to get favorite secrets with decrypted data:",
+        error
+      );
+      throw new Error(
+        "Failed to decrypt favorite secrets. Please check your password and try again."
+      );
+    }
+  }
+
   private pack(
     iv: Uint8Array,
     data: ArrayBuffer | ArrayBufferView

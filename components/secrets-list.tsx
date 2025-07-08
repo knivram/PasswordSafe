@@ -284,6 +284,134 @@ function SecretsListBase({
     }
   };
 
+  const handleToggleFavorite = async (secret: SecretWithOptionalVault) => {
+    const originalFavoriteState = secret.isFavorite;
+    const newFavoriteState = !originalFavoriteState;
+
+    // Optimistic update function
+    const updateSecretInQueries = (isFavorite: boolean) => {
+      // Update current query
+      queryClient.setQueryData(
+        queryKey,
+        (oldData: SecretWithOptionalVault[] | undefined) => {
+          if (!oldData) {
+            return [];
+          }
+          return oldData.map(s =>
+            s.id === secret.id ? { ...s, isFavorite } : s
+          );
+        }
+      );
+
+      // Update all related queries optimistically
+      if (showVaultBadges) {
+        // Update all-secrets query
+        queryClient.setQueryData(
+          [ALL_SECRETS_QUERY_KEY],
+          (oldData: SecretWithOptionalVault[] | undefined) => {
+            if (!oldData) {
+              return [];
+            }
+            return oldData.map(s =>
+              s.id === secret.id ? { ...s, isFavorite } : s
+            );
+          }
+        );
+
+        // Update specific vault query
+        queryClient.setQueryData(
+          [SECRETS_LIST_QUERY_KEY, secret.vaultId],
+          (oldData: SecretWithOptionalVault[] | undefined) => {
+            if (!oldData) {
+              return [];
+            }
+            return oldData.map(s =>
+              s.id === secret.id ? { ...s, isFavorite } : s
+            );
+          }
+        );
+      } else {
+        // Update all-secrets query
+        queryClient.setQueryData(
+          [ALL_SECRETS_QUERY_KEY],
+          (oldData: SecretWithOptionalVault[] | undefined) => {
+            if (!oldData) {
+              return [];
+            }
+            return oldData.map(s =>
+              s.id === secret.id ? { ...s, isFavorite } : s
+            );
+          }
+        );
+      }
+
+      // Update favorites query
+      queryClient.setQueryData(
+        [FAVORITE_SECRETS_QUERY_KEY],
+        (oldData: SecretWithOptionalVault[] | undefined) => {
+          if (!oldData) {
+            return [];
+          }
+          if (isFavorite) {
+            // Add to favorites if not already there
+            const exists = oldData.some(s => s.id === secret.id);
+            if (!exists) {
+              return [...oldData, { ...secret, isFavorite: true }];
+            }
+            return oldData.map(s =>
+              s.id === secret.id ? { ...s, isFavorite: true } : s
+            );
+          } else {
+            // Remove from favorites
+            return oldData.filter(s => s.id !== secret.id);
+          }
+        }
+      );
+    };
+
+    // Apply optimistic update immediately
+    updateSecretInQueries(newFavoriteState);
+
+    // Show immediate feedback
+    toast.success(
+      newFavoriteState ? "Added to favorites" : "Removed from favorites"
+    );
+
+    try {
+      // Perform server update
+      await secretsClient.toggleFavorite(secret.id);
+
+      // Server update successful, invalidate queries to ensure consistency
+      if (showVaultBadges) {
+        await queryClient.invalidateQueries({
+          queryKey: [ALL_SECRETS_QUERY_KEY],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [SECRETS_LIST_QUERY_KEY, secret.vaultId],
+        });
+      } else {
+        await queryClient.invalidateQueries({
+          queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [ALL_SECRETS_QUERY_KEY],
+        });
+      }
+
+      // Always invalidate favorites query
+      await queryClient.invalidateQueries({
+        queryKey: [FAVORITE_SECRETS_QUERY_KEY],
+      });
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+
+      // Revert optimistic update on error
+      updateSecretInQueries(originalFavoriteState);
+
+      toast.error("Failed to toggle favorite. Please try again.");
+    }
+  };
+
   if (!isInitialized || isLoadingSecrets) {
     return (
       <div className="grid gap-4">
