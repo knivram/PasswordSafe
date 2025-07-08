@@ -22,6 +22,7 @@ export interface SecretWithDecryptedData {
   vaultId: string;
   title: string;
   data: SecretData;
+  isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
