@@ -1,9 +1,12 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { finishOnboarding } from "@/app/actions/_userActions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,9 +22,6 @@ import { Label } from "@/components/ui/label";
 import { cryptoService } from "@/lib/crypto";
 import { isErrorResponse, getErrorInfo } from "@/lib/query-utils";
 import { cn } from "@/lib/utils";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 const passwordSchema = z
   .object({
