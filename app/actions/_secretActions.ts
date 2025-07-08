@@ -160,11 +160,12 @@ export interface SecretWithVault extends Secret {
 }
 
 export const getAllSecretsWithVaults = withErrorHandling(
-  withAuth(async (ctx): Promise<SecretWithVault[]> => {
+  withAuth(async (ctx, { isFavorite }: { isFavorite?: boolean } = {}): Promise<SecretWithVault[]> => {
     try {
       // Get all secrets from vaults the user has access to, limited to latest 50
       const secrets = await prisma.secret.findMany({
         where: {
+          ...(isFavorite !== undefined ? { isFavorite } : {}),
           vault: {
             vaultAccess: {
               some: {
@@ -204,6 +205,7 @@ export const getAllSecretsWithVaults = withErrorHandling(
         encryptedData: secret.encryptedData,
         createdAt: secret.createdAt,
         updatedAt: secret.updatedAt,
+        isFavorite: secret.isFavorite,
         vault: {
           id: secret.vault.id,
           name: secret.vault.name,
@@ -217,6 +219,96 @@ export const getAllSecretsWithVaults = withErrorHandling(
       console.error("Get all secrets error:", error);
       throw new AppError(
         "Failed to get secrets. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
+    }
+  })
+);
+
+export const toggleFavorite = withErrorHandling(
+  withSecretAccess(async (ctx): Promise<Secret> => {
+    try {
+      // Toggle the isFavorite status
+      const updatedSecret = await prisma.secret.update({
+        where: { id: ctx.secret.id },
+        data: {
+          isFavorite: !ctx.secret.isFavorite,
+        },
+      });
+
+      return updatedSecret;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Toggle isFavorite error:", error);
+      throw new AppError(
+        "Failed to update isFavorite status. Please try again later.",
+        ErrorCode.DATABASE_ERROR
+      );
+    }
+  })
+);
+
+export const getFavoriteSecrets = withErrorHandling(
+  withAuth(async (ctx): Promise<SecretWithVault[]> => {
+    try {
+      // Get all favorite secrets from vaults the user has access to
+      const secrets = await prisma.secret.findMany({
+        where: {
+          isFavorite: true,
+          vault: {
+            vaultAccess: {
+              some: {
+                userId: ctx.user.id,
+              },
+            },
+          },
+        },
+        include: {
+          vault: {
+            select: {
+              id: true,
+              name: true,
+              vaultAccess: {
+                where: {
+                  userId: ctx.user.id,
+                },
+                select: {
+                  wrappedKey: true,
+                },
+                take: 1,
+              },
+            },
+          },
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      });
+
+      // Transform the data to match our expected interface
+      return secrets.map(secret => ({
+        id: secret.id,
+        vaultId: secret.vaultId,
+        title: secret.title,
+        encryptedData: secret.encryptedData,
+        isFavorite: secret.isFavorite,
+        createdAt: secret.createdAt,
+        updatedAt: secret.updatedAt,
+        vault: {
+          id: secret.vault.id,
+          name: secret.vault.name,
+          wrappedKey: secret.vault.vaultAccess[0].wrappedKey,
+        },
+      }));
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Get favorite secrets error:", error);
+      throw new AppError(
+        "Failed to get favorite secrets. Please try again later.",
         ErrorCode.DATABASE_ERROR
       );
     }
