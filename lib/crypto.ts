@@ -1,4 +1,4 @@
-export class CryptoService {
+class CryptoService {
   public async onboarding(password: string): Promise<{
     publicKey: string;
     wrappedPrivateKey: string;
@@ -311,3 +311,5 @@ const BufferTransformer = {
     return btoa(binary);
   },
 };
+
+export const cryptoService = new CryptoService();
