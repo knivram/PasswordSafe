@@ -375,7 +375,7 @@ function SecretsListBase({
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => handleToggleFavorite(secret)}
                   className="p-1"
                 >
