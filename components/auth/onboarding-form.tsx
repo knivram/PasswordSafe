@@ -2,7 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Check, X } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -57,54 +57,23 @@ export function SignUpForm({
     register,
     handleSubmit,
     formState: { errors, isValid },
-    watch,
   } = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     mode: "onChange",
   });
 
-  const password = watch("password") || "";
-
-  const passwordChecks = [
-    {
-      id: "length",
-      label: "Length: at least 12 characters",
-      isValid: password.length >= 12,
-    },
-    {
-      id: "uppercase",
-      label: "At least 1 uppercase letter (A–Z)",
-      isValid: /[A-Z]/.test(password),
-    },
-    {
-      id: "lowercase",
-      label: "At least 1 lowercase letter (a–z)",
-      isValid: /[a-z]/.test(password),
-    },
-    {
-      id: "number",
-      label: "At least 1 number (0–9)",
-      isValid: /\d/.test(password),
-    },
-    {
-      id: "special",
-      label: "At least 1 special character (!@#$%^&*()_+-)",
-      isValid: /[!@#$%^&*()_+\-]/.test(password),
-    },
-  ];
-
   const onSubmit = async (data: PasswordFormValues) => {
     setError("");
     setIsLoading(true);
     try {
-      const { publicKey, wrappedPrivateKey, salt } =
+      const { publicKey, wrappedPrivateKey, salt, wrappedDefaultVaultKey } =
         await cryptoService.onboarding(data.password);
 
       const response = await finishOnboarding({
         salt,
         publicKey,
         wrappedPrivateKey,
-        wrappedDefaultVaultKey: "",
+        wrappedDefaultVaultKey,
       });
 
       if (isErrorResponse(response)) {
@@ -181,35 +150,9 @@ export function SignUpForm({
                   required
                   {...register("password")}
                 />
-                {password && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-muted-foreground text-xs font-medium">
-                      Password requirements:
-                    </p>
-                    {passwordChecks.map(check => (
-                      <div
-                        key={check.id}
-                        className="flex items-center gap-2 text-xs"
-                      >
-                        {check.isValid ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <X className="h-3 w-3 text-red-500" />
-                        )}
-                        <span
-                          className={
-                            check.isValid ? "text-green-600" : "text-red-600"
-                          }
-                        >
-                          {check.label}
-                        </span>
-                      </div>
-                    ))}
-                    {errors.password && (
-                      <div className="pt-1 text-xs text-red-600">
-                        {errors.password.message as string}
-                      </div>
-                    )}
+                {errors.password && (
+                  <div className="pt-1 text-xs text-red-600">
+                    {errors.password.message as string}
                   </div>
                 )}
               </div>
