@@ -1,12 +1,9 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { finishOnboarding } from "@/app/actions/_userActions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -169,7 +166,7 @@ export function SignUpForm({
                   {...register("repeatPassword")}
                 />
                 {errors.repeatPassword && (
-                  <div className="pt-1 text-xs text-red-600">
+                  <div className="text-xs text-red-600 pt-1">
                     {errors.repeatPassword.message as string}
                   </div>
                 )}
@@ -177,7 +174,9 @@ export function SignUpForm({
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading || !isValid}
+                disabled={
+                  isLoading || !isValid
+                }
               >
                 {isLoading
                   ? "Setting master password..."
