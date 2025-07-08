@@ -365,18 +365,24 @@ export class SecretsClient {
     privateKey: CryptoKey
   ): Promise<SecretWithDecryptedDataAndVault[]> {
     try {
-      const secretsWithVaults = await this.getFavoriteSecretsWithVaults();
+      const response = await getFavoriteSecretsWithVaults();
+      const secretsWithVaults = handleActionResponse(response);
+      const vaultKeys = new Map<string, CryptoKey>();
       const decryptedSecrets: SecretWithDecryptedDataAndVault[] = [];
 
       for (const secretWithVault of secretsWithVaults) {
         try {
-          // Unwrap vault key using private key
-          const vaultKey = await this.cryptoService.unwrapVaultKey({
-            wrappedKey: secretWithVault.vault.wrappedKey,
-            privateKey,
-          });
+          let vaultKey: CryptoKey | undefined = vaultKeys.get(
+            secretWithVault.vault.id
+          );
+          if (!vaultKey) {
+            vaultKey = await this.cryptoService.unwrapVaultKey({
+              wrappedKey: secretWithVault.vault.wrappedKey,
+              privateKey,
+            });
+            vaultKeys.set(secretWithVault.vault.id, vaultKey);
+          }
 
-          // Decrypt with vault key
           const encryptedData = this.base64ToArrayBuffer(
             secretWithVault.encryptedData
           );
@@ -426,11 +432,6 @@ export class SecretsClient {
         "Failed to decrypt favorite secrets. Please check your password and try again."
       );
     }
-  }
-
-  private async getFavoriteSecretsWithVaults() {
-    const response = await getFavoriteSecretsWithVaults();
-    return handleActionResponse(response);
   }
 
   private pack(
