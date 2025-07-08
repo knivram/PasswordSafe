@@ -291,24 +291,16 @@ const BufferTransformer = {
   },
   base64ToUnit8Array: (base64: string): Uint8Array => {
     const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      // eslint-disable-next-line security/detect-object-injection
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
+    return new Uint8Array(Array.from(binaryString, char => char.charCodeAt(0)));
   },
   arrayBufferToBase64: (buffer: ArrayBuffer): string => {
     const bytes = new Uint8Array(buffer);
     return BufferTransformer.unit8ArrayToBase64(bytes);
   },
   unit8ArrayToBase64: (bytes: Uint8Array): string => {
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) {
-      // eslint-disable-next-line security/detect-object-injection
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
+    return btoa(
+      bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), "")
+    );
   },
 };
 
