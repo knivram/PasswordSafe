@@ -311,5 +311,3 @@ const BufferTransformer = {
     return btoa(binary);
   },
 };
-
-export const cryptoService = new CryptoService();
