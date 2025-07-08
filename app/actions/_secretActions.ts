@@ -260,7 +260,8 @@ export const toggleSecretFavorite = withErrorHandling(
 );
 
 // Re-export getAllSecretsWithVaults with isFavorite filter for backward compatibility
-export const getFavoriteSecretsWithVaults = withErrorHandling(
+export const getAllSecretsWithVaults = withErrorHandling(
+  withAuth(async (ctx, filter: { isFavorite?: boolean } = {}): Promise<SecretWithVault[]> => {
   withAuth(async (ctx): Promise<SecretWithVault[]> => {
     try {
       // Call the same query but with isFavorite filter
