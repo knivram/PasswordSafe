@@ -7,7 +7,10 @@ import {
   updateSecret,
   deleteSecret,
   getAllSecretsWithVaults,
+  toggleFavorite,
+  getFavoriteSecrets,
   type UpdateSecretServerInput,
+  type SecretWithVault,
 } from "@/app/actions/_secretActions";
 import { getVault } from "@/app/actions/_vaultActions";
 import type { Secret } from "@/generated/prisma";
@@ -104,6 +107,7 @@ export class SecretsClient {
             vaultId: secret.vaultId,
             title: secret.title,
             data: secretData,
+            isFavorite: secret.isFavorite,
             createdAt: secret.createdAt,
             updatedAt: secret.updatedAt,
           });
@@ -178,11 +182,12 @@ export class SecretsClient {
   }
 
   async getAllSecretsWithDecryptedData(
-    privateKey: CryptoKey
+    privateKey: CryptoKey,
+    filter: { isFavorite?: boolean } = {}
   ): Promise<SecretWithDecryptedDataAndVault[]> {
     const vaultKeys = new Map<string, CryptoKey>();
     try {
-      const response = await getAllSecretsWithVaults();
+      const response = await getAllSecretsWithVaults(filter);
       const secretsWithVaults = handleActionResponse(response);
 
       const decryptedSecrets: SecretWithDecryptedDataAndVault[] = [];
@@ -211,6 +216,7 @@ export class SecretsClient {
             vaultId: secretWithVault.vaultId,
             title: secretWithVault.title,
             data: secretData,
+            isFavorite: secretWithVault.isFavorite,
             createdAt: secretWithVault.createdAt,
             updatedAt: secretWithVault.updatedAt,
             vault: {
@@ -233,6 +239,26 @@ export class SecretsClient {
       throw new Error(
         "Failed to decrypt secrets. Please check your password and try again."
       );
+    }
+  }
+
+  async toggleFavorite(secretId: string): Promise<Secret> {
+    try {
+      const response = await toggleFavorite({ secretId });
+      return handleActionResponse(response);
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      throw new Error("Failed to update favorite status. Please try again.");
+    }
+  }
+
+  async getFavoriteSecrets(): Promise<SecretWithVault[]> {
+    try {
+      const response = await getFavoriteSecrets();
+      return handleActionResponse(response);
+    } catch (error) {
+      console.error("Failed to get favorite secrets:", error);
+      throw new Error("Failed to get favorite secrets. Please try again.");
     }
   }
 }

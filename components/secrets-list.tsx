@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Eye, EyeOff, MoreHorizontal, Edit, Trash } from "lucide-react";
+import { Copy, Eye, EyeOff, MoreHorizontal, Edit, Trash, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ import { Skeleton } from "./ui/skeleton";
 
 const SECRETS_LIST_QUERY_KEY = "secrets-list";
 const ALL_SECRETS_QUERY_KEY = "all-secrets-list";
+const FAVORITES_SECRETS_QUERY_KEY = "favorites-list";
 
 interface SecretsListProps {
   vaultId: string;
@@ -143,6 +144,46 @@ function SecretsListBase({
     }
   };
 
+  const handleToggleFavorite = async (secret: SecretWithOptionalVault) => {
+    try {
+      await secretsClient.toggleFavorite(secret.id);
+
+      // Invalidate queries based on the type of list
+      if (showVaultBadges) {
+        // For all-secrets view, invalidate all-secrets, favorites, and specific vault queries
+        await queryClient.invalidateQueries({
+          queryKey: [ALL_SECRETS_QUERY_KEY],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ["favorites-list"],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [SECRETS_LIST_QUERY_KEY, secret.vaultId],
+        });
+      } else {
+        // For vault-specific view, invalidate vault, all-secrets, and favorites queries
+        await queryClient.invalidateQueries({
+          queryKey: [SECRETS_LIST_QUERY_KEY, vaultId],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [ALL_SECRETS_QUERY_KEY],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ["favorites-list"],
+        });
+      }
+
+      toast.success(
+        secret.isFavorite
+          ? "Removed from favorites"
+          : "Added to favorites"
+      );
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      toast.error("Failed to update favorite status. Please try again.");
+    }
+  };
+
   if (!isInitialized || isLoadingSecrets) {
     return (
       <div className="grid gap-4">
@@ -215,47 +256,71 @@ function SecretsListBase({
       {secrets.map(secret => (
         <Card className="gap-2" key={secret.id}>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-lg">{secret.title}</CardTitle>
-                {showVaultBadges && "vault" in secret && (
-                  <Badge
-                    variant="secondary"
-                    className="hover:bg-secondary/80 cursor-pointer"
-                    onClick={() => handleVaultBadgeClick(secret.vaultId)}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">{secret.title}</CardTitle>
+                  {showVaultBadges && "vault" in secret && (
+                    <Badge
+                      variant="secondary"
+                      className="hover:bg-secondary/80 cursor-pointer"
+                      onClick={() => handleVaultBadgeClick(secret.vaultId)}
+                    >
+                      {secret.vault.name}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleFavorite(secret)}
+                    title={secret.isFavorite ? "Remove from favorites" : "Add to favorites"}
                   >
-                    {secret.vault.name}
-                  </Badge>
-                )}
+                    <Star
+                      className={`h-4 w-4 ${
+                        secret.isFavorite ? "fill-yellow-400 text-yellow-400" : ""
+                      }`}
+                    />
+                  </Button>
+                  {canEditSecret(secret) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleToggleFavorite(secret)}
+                        >
+                          <Star
+                            className={`mr-2 h-4 w-4 ${
+                              secret.isFavorite ? "fill-yellow-400 text-yellow-400" : ""
+                            }`}
+                          />
+                          {secret.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSecret(secret);
+                          }}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteSecret(secret)}
+                          variant="destructive"
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
               </div>
-              {canEditSecret(secret) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSecret(secret);
-                      }}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDeleteSecret(secret)}
-                      variant="destructive"
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </CardHeader>
+            </CardHeader>
           <CardContent className="space-y-3">
             {secret.data.username && (
               <div className="flex items-center justify-between">
@@ -404,9 +469,28 @@ function AllSecretsList() {
   );
 }
 
+// Wrapper component for favorites list
+function FavoriteSecretsList() {
+  return (
+    <SecretsListBase
+      queryKey={[FAVORITES_SECRETS_QUERY_KEY]}
+      queryFn={privateKey =>
+        secretsClient.getAllSecretsWithDecryptedData(privateKey, { isFavorite: true })
+      }
+      emptyStateMessage={{
+        primary: "No favorite secrets yet",
+        secondary: "Mark secrets as favorites to see them here",
+      }}
+      showVaultBadges
+    />
+  );
+}
+
 export {
   SecretsList,
   AllSecretsList,
+  FavoriteSecretsList,
   SECRETS_LIST_QUERY_KEY,
   ALL_SECRETS_QUERY_KEY,
+  FAVORITES_SECRETS_QUERY_KEY,
 };

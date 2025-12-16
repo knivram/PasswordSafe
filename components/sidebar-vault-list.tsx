@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { List, MoreVerticalIcon, UsersIcon } from "lucide-react";
+import { List, MoreVerticalIcon, Star, UsersIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { deleteVault, getVaults } from "@/app/actions/_vaultActions";
@@ -211,6 +211,17 @@ const SidebarVaultList = ({
                 <div className="flex w-full items-center justify-between gap-2">
                   <span>All Secrets</span>
                   <List className="size-4" />
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem key="favorite-secrets">
+              <SidebarMenuButton
+                isActive={vaultId === "favorites"}
+                onClick={() => router.push(`/app/favorites`)}
+              >
+                <div className="flex w-full items-center justify-between gap-2">
+                  <span>Favorite Secrets</span>
+                  <Star className="size-4" />
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
